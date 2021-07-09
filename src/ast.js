@@ -2015,6 +2015,15 @@ function astForWhileStmt (c, n) {
     Sk.asserts.fail("wrong number of tokens for 'while' stmt");
 }
 
+function astForForeverStmt (c, n) {
+    /* forever_stmt: 'forever' ':' suite */
+    REQ(n, SYM.forever_stmt);
+    if (NCH(n) === 3) {
+        return new Sk.astnodes.Forever(astForSuite(c, CHILD(n, 2)), n.lineno, n.col_offset);
+    }
+    Sk.asserts.fail("wrong number of tokens for 'forever' stmt");
+}
+
 function astForAugassign (c, n) {
     REQ(n, SYM.augassign);
     n = CHILD(n, 0);
@@ -3249,7 +3258,7 @@ function astForStmt (c, n) {
         }
     }
     else {
-        /* compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt
+        /* compound_stmt: if_stmt | while_stmt | forever_stmt | for_stmt | try_stmt
                         | funcdef | classdef | decorated | async_stmt
         */
         ch = CHILD(n, 0);
@@ -3259,6 +3268,8 @@ function astForStmt (c, n) {
                 return astForIfStmt(c, ch);
             case SYM.while_stmt:
                 return astForWhileStmt(c, ch);
+            case SYM.forever_stmt:
+                return astForForeverStmt(c, ch);
             case SYM.for_stmt:
                 return astForForStmt(c, ch);
             case SYM.try_stmt:
