@@ -9,8 +9,8 @@ require("./howler.js");
 
 // Global support functions
 Sk.global["strftime"] = require("strftime");
-Sk.global["strptime"] = require("../support/time-helpers/strptime.js");
 require("../support/polyfills/JSBI");
+require("../support/polyfills/es6");
 require("setimmediate");
 
 // Skulpt
@@ -85,5 +85,8 @@ require("./super.js");
 require("./generic_alias.js");
 require("./builtindict.js");
 require("./constants.js");
+
+// PyAngelo
+require("./builtin_pyangelo.js");
 
 /* jshint ignore:end */

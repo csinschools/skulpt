@@ -1166,13 +1166,15 @@ function ast_for_flow_stmt(c, n)
 {
     /*
       flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt
-                 | yield_stmt
+                 | yield_stmt | label_stmt | goto_stmt
       break_stmt: 'break'
       continue_stmt: 'continue'
       return_stmt: 'return' [testlist]
       yield_stmt: yield_expr
       yield_expr: 'yield' testlist | 'yield' 'from' test
       raise_stmt: 'raise' [test [',' test [',' test]]]
+      label_stmt: 'label' NAME
+      goto_stmt: 'goto' NAME
     */
     var ch;
 
@@ -1237,7 +1239,10 @@ function ast_for_flow_stmt(c, n)
                 return new Sk.astnodes.Raise(expression, cause, inst, tback, LINENO(n), n.col_offset,
                              n.end_lineno, n.end_col_offset);
             }
-            /* fall through */
+        case SYM.label_stmt:
+            return new Sk.astnodes.Label(CHILD(ch, 1).value, LINENO(n), n.col_offset);
+        case SYM.goto_stmt:
+            return new Sk.astnodes.Goto(CHILD(ch, 1).value, LINENO(n), n.col_offset);
         default:
             Sk.asserts.fail("unexpected flow_stmt: ", TYPE(ch));
             return null;
@@ -2024,24 +2029,6 @@ function astForForeverStmt (c, n) {
     Sk.asserts.fail("wrong number of tokens for 'forever' stmt");
 }
 
-function astForRepeatUntilStmt (c, n) {
-    /* repeatuntil_stmt: 'repeat' ':' suite 'until' test */
-    REQ(n, SYM.repeatuntil_stmt);
-    if (NCH(n) === 5) {
-        return new Sk.astnodes.RepeatUntil(astForSuite(c, CHILD(n, 2)), ast_for_expr(c, CHILD(n, 4)), n.lineno, n.col_offset);
-    }
-    Sk.asserts.fail("wrong number of tokens for 'repeatuntil' stmt");
-}
-
-function astForUntilStmt (c, n) {
-    /* until_stmt: 'until' test ':' suite */
-    REQ(n, SYM.until_stmt);
-    if (NCH(n) === 4) {
-        return new Sk.astnodes.Until(ast_for_expr(c, CHILD(n, 1)), astForSuite(c, CHILD(n, 3)), n.lineno, n.col_offset);
-    }
-    Sk.asserts.fail("wrong number of tokens for 'until' stmt");
-}
-
 function astForAugassign (c, n) {
     REQ(n, SYM.augassign);
     n = CHILD(n, 0);
@@ -2611,7 +2598,7 @@ function fstring_parse(str, start, end, raw, recurse_lvl, c, n) {
             // We need to error out on any lone }s, and
             // replace doubles with singles.
             if (/(^|[^}])}(}})*($|[^}])/.test(literal)) {
-                throw new SyntaxError("f-string: single '}' is not allowed", LINENO(n), n.col_offset);
+                throw new Sk.builtin.SyntaxError("f-string: single '}' is not allowed", c.c_filename, n.lineno, n.col_offset);
             }
             literal = literal.replace(/}}/g, "}");
         }
@@ -2704,94 +2691,44 @@ function parsestrplus (c, n) {
     }
 }
 
-const invalidSyntax = /_[eE]|[eE]_|\._|j_/;
-const invalidDecimalLiteral = /_\.|[+-]_|^0_\D|_j/;
-const validUnderscores = /_(?=[^_])/g;
-function parsenumber (c, s, lineno) {
-    var neg;
-    var val;
-    var tmp;
-    var end = s.charAt(s.length - 1);
-    
-    if (s.indexOf("_") !== -1) {
-        if (invalidSyntax.test(s)) {
-            throw new Sk.builtin.SyntaxError("invalid syntax", c.c_filename, lineno);
-        }
-    
-        if (invalidDecimalLiteral.test(s)) {
-            throw new Sk.builtin.SyntaxError("invalid decimal literal", c.c_filename, lineno);
-        }
-        
-        s = s.replace(validUnderscores, "");
-    }
-    
-    // call internal complex type constructor for complex strings
+const FLOAT_RE = new RegExp(Sk._tokenize.Floatnumber);
+const underscore = /_/g;
+
+function parsenumber(c, s, lineno) {
+    s = s.replace(underscore, ""); // we already know that we have a valid underscore number from the tokenizer
+
+    const end = s[s.length - 1];
+    // we know it's just a single floating point imaginary complex number
     if (end === "j" || end === "J") {
-        return Sk.builtin.complex.complex_subtype_from_string(s);
+        return new Sk.builtin.complex(0, parseFloat(s.slice(0, -1)));
     }
 
-    // Handle longs
+    // use the tokenizer float test
+    if (FLOAT_RE.test(s)) {
+        return new Sk.builtin.float_(parseFloat(s));
+    }
+
+    const start = s[0];
+    // python 2 compatiblity
+    if (start === "0" && s !== "0" && s.charCodeAt(1) < 65 /** i.e. the second char is a digit and not a base */) {
+        s = "0o" + s.substring(1); // silent octal
+    }
+    // python2 makes no guarantee about the size of a long
+    // so only make the int literal a long if it has an L suffix
+    let isInt = true;
     if (end === "l" || end === "L") {
-        return Sk.longFromStr(s.substr(0, s.length - 1), 0);
+        s = s.slice(0, -1);
+        isInt = false;
     }
 
-    // todo; we don't currently distinguish between int and float so
-    // str is wrong for these.
-    if (s.indexOf(".") !== -1) {
-        return new Sk.builtin.float_(parseFloat(s));
+    // we know it's a valid octal, hex, binary or decimal so let Number do its thing
+    const val = Number(s); // we can rely on this since we know s is positive and is already a valid int literal
+    if (val > Number.MAX_SAFE_INTEGER) {
+        return isInt ? new Sk.builtin.int_(JSBI.BigInt(s)) : new Sk.builtin.lng(JSBI.BigInt(s));
     }
-
-    // Handle integers of various bases
-    tmp = s;
-    neg = false;
-    if (s.charAt(0) === "-") {
-        tmp = s.substr(1);
-        neg = true;
-    }
-
-    if (tmp.charAt(0) === "0" && (tmp.charAt(1) === "x" || tmp.charAt(1) === "X")) {
-        // Hex
-        tmp = tmp.substring(2);
-        val = parseInt(tmp, 16);
-    } else if ((s.indexOf("e") !== -1) || (s.indexOf("E") !== -1)) {
-        // Float with exponent (needed to make sure e/E wasn't hex first)
-        return new Sk.builtin.float_(parseFloat(s));
-    } else if (tmp.charAt(0) === "0" && (tmp.charAt(1) === "b" || tmp.charAt(1) === "B")) {
-        // Binary
-        tmp = tmp.substring(2);
-        val = parseInt(tmp, 2);
-    } else if (tmp.charAt(0) === "0") {
-        if (tmp === "0") {
-            // Zero
-            val = 0;
-        } else {
-            // Octal
-            tmp = tmp.substring(1);
-            if ((tmp.charAt(0) === "o") || (tmp.charAt(0) === "O")) {
-                tmp = tmp.substring(1);
-            }
-            val = parseInt(tmp, 8);
-        }
-    }
-    else {
-        // Decimal
-        val = parseInt(tmp, 10);
-    }
-
-    // Convert to long
-    if (val > Number.MAX_SAFE_INTEGER &&
-        Math.floor(val) === val &&
-        (s.indexOf("e") === -1 && s.indexOf("E") === -1)) {
-        return Sk.longFromStr(s, 0);
-    }
-
-    // Small enough, return parsed number
-    if (neg) {
-        return new Sk.builtin.int_(-val);
-    } else {
-        return new Sk.builtin.int_(val);
-    }
+    return isInt ? new Sk.builtin.int_(val) : new Sk.builtin.lng(val);
 }
+
 
 function astForSlice (c, n) {
     var n2;
@@ -3277,7 +3214,7 @@ function astForStmt (c, n) {
     }
     else {
         /* compound_stmt: if_stmt | while_stmt | forever_stmt
-         *              | repeatuntil_stmt | until_stmt |for_stmt | try_stmt
+         *              | for_stmt | try_stmt
          *              | funcdef | classdef | decorated | async_stmt
         */
         ch = CHILD(n, 0);
@@ -3289,10 +3226,6 @@ function astForStmt (c, n) {
                 return astForWhileStmt(c, ch);
             case SYM.forever_stmt:
                 return astForForeverStmt(c, ch);
-            case SYM.repeatuntil_stmt:
-                return astForRepeatUntilStmt(c, ch);
-            case SYM.until_stmt:
-                return astForUntilStmt(c, ch);
             case SYM.for_stmt:
                 return astForForStmt(c, ch);
             case SYM.try_stmt:

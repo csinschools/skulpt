@@ -75,6 +75,8 @@ function CompilerUnit () {
     this.exceptBlocks = [];
     // state of where to go on a return
     this.finallyBlocks = [];
+    // keep track of block number for labels
+    this.labelBlocks = {};
 }
 
 CompilerUnit.prototype.activateScope = function () {
@@ -260,6 +262,13 @@ Compiler.prototype._jump = function (block) {
         out("$blk=", block, ";");
         this.u.blocks[this.u.curblock]._next = block;
     }
+};
+
+Compiler.prototype._goto = function (s) {
+    out("PYANGELOGOTO");
+    out(s.name);
+    out(s.lineno);
+    out(s.col_offset);
 };
 
 /**
@@ -623,9 +632,9 @@ Compiler.prototype.ccompare = function (e) {
 
     for (i = 0; i < n; ++i) {
         rhs = this.vexpr(e.comparators[i]);
-        out("$ret = Sk.builtin.bool(Sk.misceval.richCompareBool(", cur, ",", rhs, ",'", e.ops[i].prototype._astname, "', true));");
+        out("$ret = Sk.misceval.richCompareBool(", cur, ",", rhs, ",'", e.ops[i].prototype._astname, "', true);");
         this._checkSuspension(e);
-        out(fres, "=$ret;");
+        out(fres, "=Sk.builtin.bool($ret);");
         this._jumpfalse("$ret", done);
         cur = rhs;
     }
@@ -651,7 +660,7 @@ Compiler.prototype.ccall = function (e) {
         kwarray = [];
         for (let kw of e.keywords) {
             if (hasStars && !Sk.__future__.python3) {
-                throw new SyntaxError("Advanced unpacking of function arguments is not supported in Python 2");
+                throw new Sk.builtin.SyntaxError("Advanced unpacking of function arguments is not supported in Python 2");
             }
             if (kw.arg) {
                 kwarray.push("'" + kw.arg.v + "'");
@@ -677,7 +686,7 @@ Compiler.prototype.ccall = function (e) {
         // note that it's part of the js API spec: https://developer.mozilla.org/en/docs/Web/API/Window/self
         // so we should probably add self to the mangling
         // TODO: feel free to ignore the above
-        out("if (typeof self === \"undefined\" || self.toString().indexOf(\"Window\") > 0) { throw new Sk.builtin.RuntimeError(\"super(): no arguments\") };");
+        out("if (typeof self === \"undefined\" || self === Sk.global) { throw new Sk.builtin.RuntimeError(\"super(): no arguments\") };");
         positionalArgs = "[$gbl.__class__,self]";
     }
     out ("$ret = (",func,".tp$call)?",func,".tp$call(",positionalArgs,",",keywordArgs,") : Sk.misceval.applyOrSuspend(",func,",undefined,undefined,",keywordArgs,",",positionalArgs,");");
@@ -1047,7 +1056,7 @@ Compiler.prototype.vexpr = function (e, data, augvar, augsubs) {
         case Sk.astnodes.FormattedValue:
             return this.cformattedvalue(e);
         case Sk.astnodes.Ellipsis:
-            return this.makeConstant("Sk.builtin.ellipsis");
+            return this.makeConstant("Sk.builtin.Ellipsis");
         default:
             Sk.asserts.fail("unhandled case " + e.constructor.name + " vexpr");
     }
@@ -1198,6 +1207,14 @@ Compiler.prototype.peekFinallyBlock = function() {
     return (this.u.finallyBlocks.length > 0) ? this.u.finallyBlocks[this.u.finallyBlocks.length-1] : undefined;
 };
 
+Compiler.prototype.pushLabelBlock = function (label, blockNo, lineno) {
+    Sk.asserts.assert(blockNo >= 0 && blockNo < this.u.blocknum);
+    if (this.u.labelBlocks.hasOwnProperty(label)) {
+        throw new Sk.builtin.SyntaxError("label " + label + " has already been defined", this.filename, lineno);
+    }
+    this.u.labelBlocks[label] = blockNo;
+};
+
 Compiler.prototype.setupExcept = function (eb) {
     out("$exc.push(", eb, ");");
     //this.pushExceptBlock(eb);
@@ -1304,6 +1321,21 @@ Compiler.prototype.outputAllUnits = function () {
                 generatedBlocks[block] = true;
 
                 ret += "case " + block + ": /* --- " + blocks[block]._name + " --- */";
+                const gotoIndex = blocks[block].indexOf("PYANGELOGOTO");
+                if (gotoIndex > -1) {
+                    const gotoLabel = blocks[block][gotoIndex + 1];
+                    const gotoLineNo = blocks[block][gotoIndex + 2];
+                    const gotoColOffset = blocks[block][gotoIndex + 3];
+                    if (! unit.labelBlocks.hasOwnProperty(gotoLabel)) {
+                        throw new Sk.builtin.SyntaxError("label " + gotoLabel + " is not defined", this.filename, gotoLineNo);
+                    }
+                    const gotoBlock = unit.labelBlocks[gotoLabel];
+                    blocks[block][gotoIndex] = "$blk=" + gotoBlock + ";";
+                    blocks[block][gotoIndex + 1] = "/* GOTO INJECTED */ continue;";
+                    blocks[block][gotoIndex + 2] = "/* Used for PyAngelo */";
+                    blocks[block][gotoIndex + 3] = "/* https://www.PyAngelo.com */";
+                    blocks[block]._next = gotoBlock;
+                }
                 ret += blocks[block].join("");
 
                 if (blocks[block]._next !== null) {
@@ -1363,6 +1395,38 @@ Compiler.prototype.cif = function (s) {
 
 };
 
+Compiler.prototype.clabel = function (s) {
+    var next;
+    var top;
+
+    top = this.newBlock("label: " + s.name);
+    this.pushLabelBlock(s.name, top, s.lineno);
+    this._jump(top);
+    this.setBlock(top);
+
+    if (Sk.debugging && this.u.canSuspend) {
+        var suspType = "Sk.delay";
+        var debugBlock = this.newBlock("debug breakpoint for line "+s.lineno);
+        out("if (Sk.breakpoints('"+this.filename+"',"+s.lineno+","+s.col_offset+")) {",
+            "var $susp = $saveSuspension({data: {type: '"+suspType+"'}, resume: function() {}}, '"+this.filename+"',"+s.lineno+","+s.col_offset+");",
+            "$susp.$blk = "+debugBlock+";",
+            "$susp.optional = true;",
+            "return $susp;",
+            "}");
+        this._jump(debugBlock);
+        this.setBlock(debugBlock);
+        this.u.doesSuspend = true;
+    }
+
+    next = this.newBlock("after label");
+    this._jump(next);
+    this.setBlock(next);
+};
+
+Compiler.prototype.cgoto = function (s) {
+    this._goto(s);
+};
+
 Compiler.prototype.cwhile = function (s) {
     var body;
     var orelse;
@@ -1378,19 +1442,6 @@ Compiler.prototype.cwhile = function (s) {
         this._jump(top);
         this.setBlock(top);
 
-        next = this.newBlock("after while");
-        orelse = s.orelse.length > 0 ? this.newBlock("while orelse") : null;
-        body = this.newBlock("while body");
-
-        this.annotateSource(s);
-        this._jumpfalse(this.vexpr(s.test), orelse ? orelse : next);
-        this._jump(body);
-
-        this.pushBreakBlock(next);
-        this.pushContinueBlock(top);
-
-        this.setBlock(body);
-
         if ((Sk.debugging || Sk.killableWhile) && this.u.canSuspend) {
             var suspType = "Sk.delay";
             var debugBlock = this.newBlock("debug breakpoint for line "+s.lineno);
@@ -1404,6 +1455,19 @@ Compiler.prototype.cwhile = function (s) {
             this.setBlock(debugBlock);
             this.u.doesSuspend = true;
         }
+
+        next = this.newBlock("after while");
+        orelse = s.orelse.length > 0 ? this.newBlock("while orelse") : null;
+        body = this.newBlock("while body");
+
+        this.annotateSource(s);
+        this._jumpfalse(this.vexpr(s.test), orelse ? orelse : next);
+        this._jump(body);
+
+        this.pushBreakBlock(next);
+        this.pushContinueBlock(top);
+
+        this.setBlock(body);
 
         this.vseqstmt(s.body);
 
@@ -1442,100 +1506,7 @@ Compiler.prototype.cforever = function (s) {
 
     this.setBlock(body);
 
-    if ((Sk.debugging || Sk.killableWhile) && this.u.canSuspend) {
-        var suspType = "Sk.delay";
-        var debugBlock = this.newBlock("debug breakpoint for line "+s.lineno);
-        out("if (Sk.breakpoints('"+this.filename+"',"+s.lineno+","+s.col_offset+")) {",
-            "var $susp = $saveSuspension({data: {type: '"+suspType+"'}, resume: function() {}}, '"+this.filename+"',"+s.lineno+","+s.col_offset+");",
-            "$susp.$blk = "+debugBlock+";",
-            "$susp.optional = true;",
-            "return $susp;",
-            "}");
-        this._jump(debugBlock);
-        this.setBlock(debugBlock);
-        this.u.doesSuspend = true;
-    }
-
-    this.vseqstmt(s.body);
-
-    this._jump(top);
-
-    this.popContinueBlock();
-    this.popBreakBlock();
-
-    this.setBlock(next);
-};
-
-Compiler.prototype.crepeatuntil = function (s) {
-    var body;
-    var next;
-    var top;
-
-    top = this.newBlock("repeatuntil");
-    this._jump(top);
-    this.setBlock(top);
-
-    next = this.newBlock("after repeatuntil");
-    body = this.newBlock("repeatuntil body");
-
-    this.annotateSource(s);
-    this._jump(body);
-
-    this.pushBreakBlock(next);
-    this.pushContinueBlock(top);
-
-    this.setBlock(body);
-
-    if ((Sk.debugging || Sk.killableWhile) && this.u.canSuspend) {
-        var suspType = "Sk.delay";
-        var debugBlock = this.newBlock("debug breakpoint for line "+s.lineno);
-        out("if (Sk.breakpoints('"+this.filename+"',"+s.lineno+","+s.col_offset+")) {",
-            "var $susp = $saveSuspension({data: {type: '"+suspType+"'}, resume: function() {}}, '"+this.filename+"',"+s.lineno+","+s.col_offset+");",
-            "$susp.$blk = "+debugBlock+";",
-            "$susp.optional = true;",
-            "return $susp;",
-            "}");
-        this._jump(debugBlock);
-        this.setBlock(debugBlock);
-        this.u.doesSuspend = true;
-    }
-
-    this.vseqstmt(s.body);
-
-    this._jumptrue(this.vexpr(s.test), next);
-    this._jump(top);
-
-    this.popContinueBlock();
-    this.popBreakBlock();
-
-    this.setBlock(next);
-};
-
-Compiler.prototype.cuntil = function (s) {
-    var body;
-    var next;
-    var top;
-    var constant = this.exprConstant(s.test);
-    if (constant === 0) {
-        return;
-    }
-    top = this.newBlock("until test");
-    this._jump(top);
-    this.setBlock(top);
-
-    next = this.newBlock("after until");
-    body = this.newBlock("until body");
-
-    this.annotateSource(s);
-    this._jumptrue(this.vexpr(s.test), next);
-    this._jump(body);
-
-    this.pushBreakBlock(next);
-    this.pushContinueBlock(top);
-
-    this.setBlock(body);
-
-    if ((Sk.debugging || Sk.killableWhile) && this.u.canSuspend) {
+    if ((Sk.debugging || Sk.killableForever) && this.u.canSuspend) {
         var suspType = "Sk.delay";
         var debugBlock = this.newBlock("debug breakpoint for line "+s.lineno);
         out("if (Sk.breakpoints('"+this.filename+"',"+s.lineno+","+s.col_offset+")) {",
@@ -2772,10 +2743,6 @@ Compiler.prototype.vstmt = function (s, class_for_super) {
             return this.cwhile(s);
         case Sk.astnodes.Forever:
             return this.cforever(s);
-        case Sk.astnodes.RepeatUntil:
-            return this.crepeatuntil(s);
-        case Sk.astnodes.Until:
-            return this.cuntil(s);
         case Sk.astnodes.If:
             return this.cif(s);
         case Sk.astnodes.Raise:
@@ -2805,6 +2772,12 @@ Compiler.prototype.vstmt = function (s, class_for_super) {
             break;
         case Sk.astnodes.Debugger:
             out("debugger;");
+            break;
+        case Sk.astnodes.Label:
+            this.clabel(s);
+            break;
+        case Sk.astnodes.Goto:
+            this.cgoto(s);
             break;
         default:
             Sk.asserts.fail("unhandled case in vstmt: " + JSON.stringify(s));
@@ -3052,7 +3025,7 @@ Compiler.prototype.cbody = function (stmts, class_for_super) {
     }
     /* Every annotated class and module should have __annotations__. */
     if (this.u.hasAnnotations) {
-        this.u.varDeclsCode += "$loc.__annotations__ = new Sk.builtin.dict();";
+        this.u.varDeclsCode += "$loc.__annotations__ || ($loc.__annotations__ = new Sk.builtin.dict());";
     }
 };
 

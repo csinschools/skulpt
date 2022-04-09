@@ -288,13 +288,12 @@ Sk.importModuleInternal_ = function (name, dumpJS, modname, suppliedPyBody, rela
                 });
 
             }
-            if (Sk.goto) {
+            if (Sk.onAfterCompile && typeof Sk.onAfterCompile === "function") {
                 try {
-                    co.code = parseGoto(name, co.code);
+                    co.code = Sk.onAfterCompile(name, co.code);
                 } catch (e) {
-                    throw new Sk.builtin.ImportError("Could not parse goto in module named " + name);
                 }
-            }
+            }              
             return co;
 
         }, function(co) {
@@ -368,9 +367,15 @@ Sk.importModuleInternal_ = function (name, dumpJS, modname, suppliedPyBody, rela
             if (co.filename && co.funcname !== "$builtinmodule") {
                 module["$d"]["__file__"] = new Sk.builtin.str(co.filename);
             }
-
-            return modscope(module["$d"]);
-
+            try {
+                return modscope(module["$d"]);
+            } catch (e) {
+                try {
+                    // don't cache a module if it raised an exception on load
+                    Sk.abstr.objectDelItem(Sk.sysmodules, new Sk.builtin.str(modname));
+                } catch {}
+                throw e;
+            }
         }, function (modlocs) {
             var i;
 
