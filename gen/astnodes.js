@@ -326,6 +326,18 @@ Sk.astnodes.While = function While(/* {expr_ty} */ test, /* {asdl_seq *} */
 }
 
 /** @constructor */
+Sk.astnodes.Forever = function Forever(/* {asdl_seq *} */ body, /* {int} */
+                                            lineno, /* {int} */ col_offset)
+{
+    Sk.asserts.assert(lineno !== null && lineno !== undefined);
+    Sk.asserts.assert(col_offset !== null && col_offset !== undefined);
+    this.body = body;
+    this.lineno = lineno;
+    this.col_offset = col_offset;
+    return this;
+}
+
+/** @constructor */
 Sk.astnodes.If = function If(/* {expr_ty} */ test, /* {asdl_seq *} */ body, /*
                                   {asdl_seq *} */ orelse, /* {int} */ lineno,
                                   /* {int} */ col_offset)
@@ -534,6 +546,30 @@ Sk.astnodes.Debugger = function Debugger(/* {int} */ lineno, /* {int} */
 {
     Sk.asserts.assert(lineno !== null && lineno !== undefined);
     Sk.asserts.assert(col_offset !== null && col_offset !== undefined);
+    this.lineno = lineno;
+    this.col_offset = col_offset;
+    return this;
+}
+
+/** @constructor */
+Sk.astnodes.Label = function Label(/* {identifier} */ name, /* {int} */ lineno,
+                                        /* {int} */ col_offset)
+{
+    Sk.asserts.assert(lineno !== null && lineno !== undefined);
+    Sk.asserts.assert(col_offset !== null && col_offset !== undefined);
+    this.name = name;
+    this.lineno = lineno;
+    this.col_offset = col_offset;
+    return this;
+}
+
+/** @constructor */
+Sk.astnodes.Goto = function Goto(/* {identifier} */ name, /* {int} */ lineno,
+                                      /* {int} */ col_offset)
+{
+    Sk.asserts.assert(lineno !== null && lineno !== undefined);
+    Sk.asserts.assert(col_offset !== null && col_offset !== undefined);
+    this.name = name;
     this.lineno = lineno;
     this.col_offset = col_offset;
     return this;
@@ -1156,6 +1192,10 @@ Sk.astnodes.While.prototype._fields = [
     "body", function(n) { return n.body; },
     "orelse", function(n) { return n.orelse; }
 ];
+Sk.astnodes.Forever.prototype._astname = "Forever";
+Sk.astnodes.Forever.prototype._fields = [
+    "body", function(n) { return n.body; }
+];
 Sk.astnodes.If.prototype._astname = "If";
 Sk.astnodes.If.prototype._fields = [
     "test", function(n) { return n.test; },
@@ -1230,6 +1270,14 @@ Sk.astnodes.Print.prototype._fields = [
 ];
 Sk.astnodes.Debugger.prototype._astname = "Debugger";
 Sk.astnodes.Debugger.prototype._fields = [
+];
+Sk.astnodes.Label.prototype._astname = "Label";
+Sk.astnodes.Label.prototype._fields = [
+    "name", function(n) { return n.name; }
+];
+Sk.astnodes.Goto.prototype._astname = "Goto";
+Sk.astnodes.Goto.prototype._fields = [
+    "name", function(n) { return n.name; }
 ];
 Sk.astnodes.BoolOp.prototype._astname = "BoolOp";
 Sk.astnodes.BoolOp.prototype._fields = [

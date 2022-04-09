@@ -136,11 +136,17 @@ Sk.configure = function (options) {
     Sk.debugging = options["debugging"] || false;
     Sk.asserts.assert(typeof Sk.debugging === "boolean");
 
+    Sk.goto = options["goto"] || false;
+    Sk.asserts.assert(typeof Sk.goto === "boolean");
+
     Sk.killableWhile = options["killableWhile"] || false;
     Sk.asserts.assert(typeof Sk.killableWhile === "boolean");
 
     Sk.killableFor = options["killableFor"] || false;
     Sk.asserts.assert(typeof Sk.killableFor === "boolean");
+
+    Sk.killableForever = options["killableForever"] || false;
+    Sk.asserts.assert(typeof Sk.killableForever === "boolean");
 
     Sk.signals = typeof options["signals"] !== undefined ? options["signals"] : null;
     if (Sk.signals === true) {

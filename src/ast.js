@@ -1166,13 +1166,15 @@ function ast_for_flow_stmt(c, n)
 {
     /*
       flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt
-                 | yield_stmt
+                 | yield_stmt | label_stmt | goto_stmt
       break_stmt: 'break'
       continue_stmt: 'continue'
       return_stmt: 'return' [testlist]
       yield_stmt: yield_expr
       yield_expr: 'yield' testlist | 'yield' 'from' test
       raise_stmt: 'raise' [test [',' test [',' test]]]
+      label_stmt: 'label' NAME
+      goto_stmt: 'goto' NAME
     */
     var ch;
 
@@ -1237,7 +1239,10 @@ function ast_for_flow_stmt(c, n)
                 return new Sk.astnodes.Raise(expression, cause, inst, tback, LINENO(n), n.col_offset,
                              n.end_lineno, n.end_col_offset);
             }
-            /* fall through */
+        case SYM.label_stmt:
+            return new Sk.astnodes.Label(CHILD(ch, 1).value, LINENO(n), n.col_offset);
+        case SYM.goto_stmt:
+            return new Sk.astnodes.Goto(CHILD(ch, 1).value, LINENO(n), n.col_offset);
         default:
             Sk.asserts.fail("unexpected flow_stmt: ", TYPE(ch));
             return null;
@@ -2013,6 +2018,15 @@ function astForWhileStmt (c, n) {
         return new Sk.astnodes.While(ast_for_expr(c, CHILD(n, 1)), astForSuite(c, CHILD(n, 3)), astForSuite(c, CHILD(n, 6)), n.lineno, n.col_offset);
     }
     Sk.asserts.fail("wrong number of tokens for 'while' stmt");
+}
+
+function astForForeverStmt (c, n) {
+    /* forever_stmt: 'forever' ':' suite */
+    REQ(n, SYM.forever_stmt);
+    if (NCH(n) === 3) {
+        return new Sk.astnodes.Forever(astForSuite(c, CHILD(n, 2)), n.lineno, n.col_offset);
+    }
+    Sk.asserts.fail("wrong number of tokens for 'forever' stmt");
 }
 
 function astForAugassign (c, n) {
@@ -3199,8 +3213,9 @@ function astForStmt (c, n) {
         }
     }
     else {
-        /* compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt
-                        | funcdef | classdef | decorated | async_stmt
+        /* compound_stmt: if_stmt | while_stmt | forever_stmt
+         *              | for_stmt | try_stmt
+         *              | funcdef | classdef | decorated | async_stmt
         */
         ch = CHILD(n, 0);
         REQ(n, SYM.compound_stmt);
@@ -3209,6 +3224,8 @@ function astForStmt (c, n) {
                 return astForIfStmt(c, ch);
             case SYM.while_stmt:
                 return astForWhileStmt(c, ch);
+            case SYM.forever_stmt:
+                return astForForeverStmt(c, ch);
             case SYM.for_stmt:
                 return astForForStmt(c, ch);
             case SYM.try_stmt:

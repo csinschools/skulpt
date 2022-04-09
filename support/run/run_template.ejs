@@ -109,6 +109,8 @@ function runit(myDiv, pyver) {
 </form>
 
 <h3>Canvas</h3>
+<canvas id="canvas" width="500" height="400" tabindex="1"></canvas>
+<pre id="console"></pre>
 <div id="turtle" height="500" width="800"
 	style="border-style: solid; display: none"></div>
 
@@ -119,5 +121,8 @@ function runit(myDiv, pyver) {
 <pre id="runbrowser_jsout"></pre>
 
 </div>
+<script>
+Sk.PyAngelo.preparePage();
+</script>
 </body>
 </html>

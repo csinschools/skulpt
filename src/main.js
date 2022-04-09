@@ -5,6 +5,7 @@
 // Order is important!
 
 require("./util.js");
+require("./howler.js");
 
 // Global support functions
 Sk.global["strftime"] = require("strftime");
@@ -84,5 +85,8 @@ require("./super.js");
 require("./generic_alias.js");
 require("./builtindict.js");
 require("./constants.js");
+
+// PyAngelo
+require("./builtin_pyangelo.js");
 
 /* jshint ignore:end */
