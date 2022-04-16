@@ -1,14 +1,23 @@
 import microBit
 
 class Microbit:
-    def __init__(self, blockUntilConnect = True):
+    def __init__(self, blockUntilConnect = True, showProgress = True):
         self.uBit = microBit.Microbit()
         if blockUntilConnect:
             while not self.uBit.isConnected():
+                if showProgress:
+                    msg = self.uBit.dequeueStatusMessage()
+                    if len(msg) > 0:
+                        print(msg)
                 continue        
             self.name = self.uBit.getName()
+        if showProgress:
+            print("Successfully connected")
         
     def setText(self, text):
+        self.uBit.setText(text)
+        
+    def print(self, text):
         self.uBit.setText(text)
         
     def getButtonA(self):
@@ -68,13 +77,13 @@ class Microbit:
             continue
         return
         
-    def setLED(self, x, y, value):
-        self.uBit.updatePixel(x, y, value)
+    def set(self, col, row, value):
+        self.uBit.updatePixel(4 - row, col, value)
         
-    def clearLED(self):
+    def clear(self):
         self.uBit.clearLED()    
         
-    def fillLED(self):
+    def fill(self):
         self.uBit.fillLED()  
         
     def stopRecordData(self):
