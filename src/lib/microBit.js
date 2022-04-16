@@ -24,6 +24,31 @@ var $builtinmodule = function(name)
     var TEMP_SRV = 'e95d6100-251d-470a-a062-fa1922dfa9a8'
     var TEMP_DATA = 'e95d9250-251d-470a-a062-fa1922dfa9a8'
     var TEMP_PERIOD = 'e95d1b25-251d-470a-a062-fa1922dfa9a8'
+	
+	var BLE_LOOKUP = {
+		'e95d0753-251d-470a-a062-fa1922dfa9a8': 'ACCEL_SRV',
+		'e95dca4b-251d-470a-a062-fa1922dfa9a8': 'ACCEL_DATA',
+		'e95dfb24-251d-470a-a062-fa1922dfa9a8': 'ACCEL_PERIOD',
+		'e95df2d8-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_SRV',
+		'e95dfb11-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_DATA',
+		'e95d386c-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_PERIOD',
+		'e95d9715-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_BEARING',
+		'e95d9882-251d-470a-a062-fa1922dfa9a8': 'BTN_SRV',
+		'e95dda90-251d-470a-a062-fa1922dfa9a8': 'BTN_A_STATE',
+		'e95dda91-251d-470a-a062-fa1922dfa9a8': 'BTN_B_STATE',
+		'e95d127b-251d-470a-a062-fa1922dfa9a8': 'IO_PIN_SRV',
+		'e95d8d00-251d-470a-a062-fa1922dfa9a8': 'IO_PIN_DATA',
+		'e95d5899-251d-470a-a062-fa1922dfa9a8': 'IO_AD_CONFIG',
+		'e95db9fe-251d-470a-a062-fa1922dfa9a8': 'IO_PIN_CONFIG',
+		'e95dd822-251d-470a-a062-fa1922dfa9a8': 'IO_PIN_PWM',
+		'e95dd91d-251d-470a-a062-fa1922dfa9a8': 'LED_SRV',
+		'e95d7b77-251d-470a-a062-fa1922dfa9a8': 'LED_STATE',
+		'e95d93ee-251d-470a-a062-fa1922dfa9a8': 'LED_TEXT',
+		'e95d0d2d-251d-470a-a062-fa1922dfa9a8': 'LED_SCROLL',
+		'e95d6100-251d-470a-a062-fa1922dfa9a8': 'TEMP_SRV',
+		'e95d9250-251d-470a-a062-fa1922dfa9a8': 'TEMP_DATA',
+		'e95d1b25-251d-470a-a062-fa1922dfa9a8': 'TEMP_PERIOD'
+	};
        
     class uBit {
 
@@ -55,7 +80,7 @@ var $builtinmodule = function(name)
         this.onDisconnectCallback=function(){};
 
         this.onBLENotifyCallback=function(){};
-
+		
         this.characteristic = {
           IO_PIN_DATA: {},
           IO_AD_CONFIG: {},
@@ -66,7 +91,7 @@ var $builtinmodule = function(name)
           LED_SCROLL: {},
         }
       }
-
+	 
       getTemperature() {
         return this.temperature;
       }
@@ -219,7 +244,7 @@ var $builtinmodule = function(name)
 
         // MAGNETOMETER CHARACTERISTIC (bearing)
         if (event.target.uuid == MAGNETO_BEARING) {
-          //console.log("BEARING", event.target.value.getInt16(0,true));
+          console.log("BEARING", event.target.value.getInt16(0,true));
           this.magnetometer_bearing = event.target.value.getInt16(0, true);
         }
 
@@ -231,97 +256,6 @@ var $builtinmodule = function(name)
         }
         
         this.onBLENotifyCallback();
-      }
-
-      searchDevice() {
-        filters: []
-        var options = {};
-        options.acceptAllDevices = true;
-        options.optionalServices = [ACCEL_SRV, MAGNETO_SRV, BTN_SRV, IO_PIN_SRV, LED_SRV, TEMP_SRV];
-
-        console.log('Requesting Bluetooth Device...');
-        console.log('with ' + JSON.stringify(options));
-
-        navigator.bluetooth.requestDevice(options)
-        .then(device => {
-
-          console.log('> Name:             ' + device.name);
-          console.log('> Id:               ' + device.id);
-
-          device.addEventListener('gattserverdisconnected', this.onDisconnectCallback);
-
-          // Attempts to connect to remote GATT Server.
-          return device.gatt.connect();
-
-        })
-        .then(server => {
-          // Note that we could also get all services that match a specific UUID by
-          // passing it to getPrimaryServices().
-          this.onConnectCallback();
-          console.log('Getting Services...');
-          return server.getPrimaryServices();
-        })
-        .then(services => {
-          console.log('Getting Characteristics...');
-          let queue = Promise.resolve();
-          services.forEach(service => {
-            queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
-              console.log('> Service: ' + service.uuid);
-              characteristics.forEach(characteristic => {
-                console.log('>> Characteristic: ' + characteristic.uuid + ' ' +
-                  getSupportedProperties(characteristic));
-
-                //need to store all the characteristic I want to write to be able to access them later.
-                switch (characteristic.uuid) {
-                  case IO_PIN_DATA:
-                    this.characteristic.IO_PIN_DATA = characteristic;
-                    break;
-
-                  case IO_AD_CONFIG:
-                    this.characteristic.IO_AD_CONFIG = characteristic;
-                    break;
-
-                  case IO_PIN_CONFIG:
-                    this.characteristic.IO_PIN_CONFIG = characteristic;
-                    break;
-
-                  case IO_PIN_PWM:
-                    this.characteristic.IO_PIN_PWM = characteristic;
-                    break;
-
-                  case LED_STATE:
-                    this.characteristic.LED_STATE = characteristic;
-                    this.connected = true;
-
-                    break;
-
-                  case LED_TEXT:
-                    this.characteristic.LED_TEXT = characteristic;
-                    break;
-
-                  case LED_SCROLL:
-                    this.characteristic.LED_SCROLL = characteristic;
-                    break;
-
-                  default:
-
-                }
-
-
-                if (getSupportedProperties(characteristic).includes('NOTIFY')) {
-                  characteristic.startNotifications().catch(err => console.log('startNotifications', err));
-                  characteristic.addEventListener('characteristicvaluechanged',
-                    this.characteristic_updated.bind(this));
-                }
-              });
-            }));
-          });
-          return queue;
-        }
-      )
-        .catch(error => {
-          console.log('Argh! ' + error);
-        });
       }
     }
 
@@ -406,14 +340,13 @@ var $builtinmodule = function(name)
             options.acceptAllDevices = true;
             options.optionalServices = [ACCEL_SRV, MAGNETO_SRV, BTN_SRV, IO_PIN_SRV, LED_SRV, TEMP_SRV];
 
-            console.log('Requesting Bluetooth Device...');
-            console.log('with ' + JSON.stringify(options));
-
             self.microBit = new uBit();
-			
+					
 			self.writableHandle = null;
 			self.interval = null;
 			self.isRecording = false;
+			
+			self.statusMessages = [];
 			
 			self.recordButtonA = async function() {
 				if (self.writableHandle !== null)
@@ -466,8 +399,7 @@ var $builtinmodule = function(name)
 			
 			self.microBit.setButtonACallback(self.recordButtonA);
 			
-			self.microBit.setButtonBCallback(self.recordButtonB);
-			
+			self.microBit.setButtonBCallback(self.recordButtonB);		
 			
 			self.recordDataFunc = async function(interval)
 			{
@@ -493,7 +425,9 @@ var $builtinmodule = function(name)
 				  self.interval = window.setInterval(self.recordTempAccelerometer, interval);
 			  }
 			  self.isRecording = true;
-			}			
+			}	
+
+			self.statusMessages.push("Requesting bluetooth device...");			
 
             navigator.bluetooth.requestDevice(options)
             .then(device => {
@@ -501,6 +435,8 @@ var $builtinmodule = function(name)
                 self.device = device;
                 console.log('> Name:             ' + device.name);
                 console.log('> Id:               ' + device.id);
+				
+				self.statusMessages.push("Device found: " + device.name + ", " + device.id);	
 
                 // Attempts to connect to remote GATT Server.
                 return device.gatt.connect();
@@ -510,15 +446,19 @@ var $builtinmodule = function(name)
               // Note that we could also get all services that match a specific UUID by
               // passing it to getPrimaryServices().
               console.log('Getting Services...');
+			  self.statusMessages.push("Getting services, please wait...");	
               return server.getPrimaryServices();
             })
             .then(services => {
               console.log('Getting Characteristics...');
+			  self.statusMessages.push("Getting characteristics...");	
               let queue = Promise.resolve();
               services.forEach(service => {
                 queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
+				  self.statusMessages.push("Service retrieved:" + service.uuid + ":" + BLE_LOOKUP[service.uuid]);	
                   console.log('> Service: ' + service.uuid);
                   characteristics.forEach(characteristic => {
+					self.statusMessages.push("Characteristics retrieved:" + characteristic.uuid + ":" + BLE_LOOKUP[characteristic.uuid]);
                     console.log('>> Characteristic: ' + characteristic.uuid + ' ' +
                       getSupportedProperties(characteristic));
 
@@ -599,6 +539,15 @@ var $builtinmodule = function(name)
 			return new Sk.builtin.none;  
 		});
 		
+		$loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
+			msg = "";
+			if (self.statusMessages.length != 0) {
+				msg = self.statusMessages[0];
+				self.statusMessages.shift();
+			}
+			return new Sk.builtin.str(msg);  
+		});
+		
 		$loc.clearLED = new Sk.builtin.func((self) => {
 			ledMatrix = [
 			  ['0', '0', '0', '0', '0'],
@@ -630,7 +579,7 @@ var $builtinmodule = function(name)
           console.log("Updating Scrolling text:" + text);
           self.microBit.writeMatrixText(text);
           return new Sk.builtin.none;  
-        });      
+        });    		
 
         $loc.isConnected = new Sk.builtin.func((self) => {
             return new Sk.builtin.bool(self.microBit.connected);   
@@ -706,113 +655,6 @@ var $builtinmodule = function(name)
 
     },
     'Microbit', []);
-
-    
-    mod.isConnected = new Sk.builtin.bool(false); 
-    mod.buttonA = new Sk.builtin.int_(0);
-    mod.buttonB = new Sk.builtin.int_(0);
-    
-    mod.accX = new Sk.builtin.float_(0);
-    mod.accY = new Sk.builtin.float_(0);
-    mod.accZ = new Sk.builtin.float_(0);
-    mod.temp = new Sk.builtin.float_(0);
-    mod.bearing = new Sk.builtin.float_(0);
-    
-    mod.microBit = new uBit();
-
-    mod.microBit.onConnect(function(){
-      console.log("connected");
-
-      //document.getElementById("connected").innerHTML="true";
-      //document.getElementById("properties").classList.toggle('inactive');
-
-      mod.microBit.setButtonACallback(function(){
-        console.log("buttonA pressed");
-      });
-
-      mod.microBit.setButtonBCallback(function(){
-        console.log("buttonB pressed");
-      });
-      
-      mod.isConnected = new Sk.builtin.bool(true); 
-    });
-
-    mod.microBit.onDisconnect(function(){
-      console.log("disconnected");
-      //document.getElementById("connected").innerHTML="false";
-    });
-        
-    mod.microBit.onBleNotify(function(){
-      //document.getElementById("buttonA").innerHTML=microBit.getButtonA();
-      //document.getElementById("buttonB").innerHTML=microBit.getButtonB();
-
-      //document.getElementById("acc_X").innerHTML=microBit.getAccelerometer().x;
-      //document.getElementById("acc_Y").innerHTML=microBit.getAccelerometer().y;
-      //document.getElementById("acc_Z").innerHTML=microBit.getAccelerometer().z;
-
-      //document.getElementById("temp").innerHTML=microBit.getTemperature();
-      //document.getElementById("bearing").innerHTML=microBit.getBearing();
-        mod.buttonA = new Sk.builtin.int_(mod.microBit.buttonA);
-        mod.buttonB = new Sk.builtin.int_(mod.microBit.buttonB);
-        mod.accX = new Sk.builtin.float_(mod.microBit.getAccelerometer().x);
-        mod.accY = new Sk.builtin.float_(mod.microBit.getAccelerometer().y);
-        mod.accZ = new Sk.builtin.float_(mod.microBit.getAccelerometer().z);
-        mod.temp = new Sk.builtin.float_(mod.microBit.getTemperature());
-        mod.bearing = new Sk.builtin.float_(mod.microBit.getBearing());      
-    })   
-   
-    mod.getAccelerometer = new Sk.builtin.func(() => {
-      return new Sk.builtin.list([new Sk.builtin.int_(mod.microBit.getAccelerometer().x), new Sk.builtin.int_(mod.microBit.getAccelerometer().y), new Sk.builtin.int_(mod.microBit.getAccelerometer().z)]);   
-    });   
-
-    mod.getBearing = new Sk.builtin.func(() => {
-      return new Sk.builtin.float_(mod.microBit.getBearing());   
-    }); 
-
-    mod.getButtonA = new Sk.builtin.func(() => {
-      return new Sk.builtin.int_(mod.microBit.buttonA);   
-    });   
-
-    mod.getButtonB = new Sk.builtin.func(() => {
-      return new Sk.builtin.int_(mod.microBit.buttonB);   
-    });       
-    
-    //function searchDevice(){
-    mod.searchDevice = new Sk.builtin.func(() => {
-      mod.microBit.searchDevice();
-    });    
-
-    var ledMatrix = [
-      ['0', '0', '0', '0', '0'],
-      ['0', '0', '0', '0', '0'],
-      ['0', '0', '0', '0', '0'],
-      ['0', '0', '0', '0', '0'],
-      ['0', '0', '0', '0', '0']
-    ]
-
-    //function updatePixel(x,y,value){
-    mod.updatePixel = new Sk.builtin.func((x, y, value) => {
-      if (value){
-        ledMatrix[x][y]=1;
-      }else{
-        ledMatrix[x][y]=0;
-      }
-      mod.microBit.writeMatrixIcon(ledMatrix);
-      
-      return new Sk.builtin.none;  
-    });
-   
-    mod.isConnected = new Sk.builtin.func(() => {
-       return new Sk.builtin.bool(mod.microBit.connected);   
-    });
-       
-    mod.updateText = new Sk.builtin.func((scrollText) => {
-      //text=document.getElementById("newText").value;
-      var text = "" + scrollText;
-      console.log("Updating Scrolling text:" + text);
-      mod.microBit.writeMatrixText(text);
-      return new Sk.builtin.none;  
-    });    
     
     return mod;
 }
