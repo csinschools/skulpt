@@ -203,7 +203,6 @@ var $builtinmodule = function(name)
 
       characteristic_updated(event) {
 
-        
         //BUTTON CHARACTERISTIC
         if (event.target.uuid == BTN_A_STATE) {
           //console.log("BTN_A_STATE", event.target.value.getInt8());
@@ -244,21 +243,19 @@ var $builtinmodule = function(name)
 
         // MAGNETOMETER CHARACTERISTIC (bearing)
         if (event.target.uuid == MAGNETO_BEARING) {
-          console.log("BEARING", event.target.value.getInt16(0,true));
+          // console.log("BEARING", event.target.value.getInt16(0,true));
           this.magnetometer_bearing = event.target.value.getInt16(0, true);
         }
 
         // TEMPERATURE CHARACTERISTIC
         if (event.target.uuid == TEMP_DATA) {
-          //console.log("TEMP_DATA", event.target.value.getInt8());
+          // console.log("TEMP_DATA", event.target.value.getInt8());
           this.temperature = event.target.value.getInt8();
-
         }
         
         this.onBLENotifyCallback();
       }
     }
-
 
     /* Utils */
 
@@ -526,17 +523,15 @@ var $builtinmodule = function(name)
 
 		//function updatePixel(x,y,value){
 		$loc.updatePixel = new Sk.builtin.func((self, x, y, value) => {
-			if (value) 
+			if (value == "True") 
 			{
 				ledMatrix[x][y]=1;
 			}
-			else 
+			else if (value == "False") 
 			{
 				ledMatrix[x][y]=0;
 			}
-			self.microBit.writeMatrixIcon(ledMatrix);
-
-			return new Sk.builtin.none;  
+			self.microBit.writeMatrixIcon(ledMatrix);	 
 		});
 		
 		$loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
@@ -618,15 +613,15 @@ var $builtinmodule = function(name)
         });
 			
 		$loc.getAccelerometerX = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.accelerometer.x);
+            return new Sk.builtin.float_((self.microBit.accelerometer.x/1000*9.8).toFixed(1));
         });
 		
 		$loc.getAccelerometerY = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.accelerometer.y);
+            return new Sk.builtin.float_((self.microBit.accelerometer.y/1000*9.8).toFixed(1));
         });
 		
 		$loc.getAccelerometerZ = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.accelerometer.z);
+            return new Sk.builtin.float_((self.microBit.accelerometer.z/1000*9.8).toFixed(1));
         });
 		
 		$loc.recordData = new Sk.builtin.func((self, interval) => {
