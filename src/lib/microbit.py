@@ -110,3 +110,22 @@ class Microbit:
 
     def stopRecordData(self):
         return self.uBit.stopRecordData()
+    
+    def getCompass(self, bearing):
+        if bearing > 22 and bearing <= 67:
+            facing = "NE"
+        elif bearing > 67 and bearing <= 112:
+            facing = "E"
+        elif bearing > 112 and bearing <= 157:
+            facing = "SE"
+        elif bearing > 157 and bearing <= 202:
+            facing = "S"
+        elif bearing > 202 and bearing <= 247:
+            facing = "SW"
+        elif bearing > 247 and bearing <= 292:
+            facing = "W"
+        elif bearing > 292 and bearing <= 337:
+            facing = "NW"
+        else:
+            facing = "N"
+        return facing

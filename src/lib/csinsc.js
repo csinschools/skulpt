@@ -50,7 +50,7 @@ var $builtinmodule = function(name)
       speechSynthesis.onvoiceschanged = populateVoiceList;
     }
     
-    mod.say = new Sk.builtin.func((text, voice) => {    
+    mod.saySomething = new Sk.builtin.func((text, voice) => {    
       const badWords = [
         'YXJzZQ==',         'YXJzZWhvbGU=',     'YmFsbHM=',         'YmFzdGFyZA==',
         'YmVlZg==',         'Y3VydGFpbnM=',     'Y3Vt',             'YmVsbGVuZA==',
@@ -123,9 +123,9 @@ var $builtinmodule = function(name)
         }
       }
 
-/*       mod.recognition.onspeechend = function() {
-        mod.recognition.stop();
-      } */
+      mod.recognition.onspeechend = function() {
+        mod.listening = false;
+      } 
 
       mod.recognition.onnomatch = function(event) {
         console.log("I didn\'t recognize that, sorry.");
