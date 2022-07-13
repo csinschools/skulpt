@@ -173,8 +173,7 @@ var $builtinmodule = function(name)
         var buffer= new Uint8Array(speed);
         if(this.connected){
           this.characteristic.LED_TEXT.writeValue(buffer)
-          .then(_ => {
-          })
+          .then(_ => {})
           .catch(error => {
             console.log(error);
           });
@@ -185,8 +184,7 @@ var $builtinmodule = function(name)
         var buffer= new Uint8Array(toUTF8Array(str));
         if(this.connected){
           this.characteristic.LED_TEXT.writeValue(buffer)
-          .then(_ => {
-          })
+          .then(_ => {})
           .catch(error => {
             console.log(error);
           });
@@ -585,11 +583,21 @@ var $builtinmodule = function(name)
         });
         
         $loc.getButtonA = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.buttonA);
+            if (self.microBit.buttonA > 0){
+              msg = 1;
+            } else {
+              msg = 0;
+            }
+            return new Sk.builtin.int_(msg);
         });
 		
         $loc.getButtonB = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.buttonB);
+            if (self.microBit.buttonB > 0){
+              msg = 1;
+            } else {
+              msg = 0;
+            }
+            return new Sk.builtin.int_(msg);
         });
 		
 		$loc.getTemperature = new Sk.builtin.func((self) => {

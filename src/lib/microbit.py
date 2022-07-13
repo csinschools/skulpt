@@ -104,9 +104,11 @@ class Microbit:
 
     def clear(self):                            # Turns off LEDs
         self.uBit.clearLED()
+        sleep(0.05)
 
     def fill(self):                             # Turns on all LEDs
         self.uBit.fillLED()
+        sleep(0.05)
 
     def stopRecordData(self):
         return self.uBit.stopRecordData()
@@ -126,6 +128,8 @@ class Microbit:
             facing = "W"
         elif bearing > 292 and bearing <= 337:
             facing = "NW"
+        elif bearing > 337 and bearing <= 359 or bearing >= 0 and bearing <= 22:
+            facing = "NW"
         else:
-            facing = "N"
+            facing = "Number out of range 0 to 359"
         return facing
