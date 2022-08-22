@@ -38,6 +38,25 @@ var $builtinmodule = function(name)
         $loc.underline = new Sk.builtin.str("\u001b[ 4;2;0;0;0 m");    
     }, 'Style', []); 
     
+    mod.sendsms = new Sk.builtin.func((number, message) => {
+        var data = "number="+ number + "&msg=" + message;
+
+        var xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+
+        xhr.addEventListener("readystatechange", function () {
+             if (this.readyState === 4) {
+                console.log(this.responseText);
+             }
+        });
+
+        xhr.open("GET", "https://csinsc-codestore.azurewebsites.net/sendtext?" + data);
+        xhr.setRequestHeader("cache-control", "no-cache");
+        xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+        xhr.withCredentials = false;
+        xhr.send(data);        
+    });
+    
     var synth = window.speechSynthesis;
     var voices = [];
 	

@@ -9,7 +9,7 @@ if (!shell.test("-e", "gen")) {
 
 shell.cd(path.resolve("src", "pgen", "parser"));
 filepath = path.resolve("..", "..", "..", "gen", "parse_tables.js");
-shell.exec("python2.7 main.py " + filepath);
+shell.exec("C:/Python27/python.exe main.py " + filepath);
 shell.cd(path.resolve("..", "ast"));
 filepath = path.resolve("..", "..", "..", "gen", "astnodes.js");
-shell.exec("python2.7 asdl_js.py Python.asdl " + filepath);
+shell.exec("C:/Python27/python.exe asdl_js.py Python.asdl " + filepath);
