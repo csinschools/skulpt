@@ -59,11 +59,6 @@ var $builtinmodule = function(name)
     
     var synth = window.speechSynthesis;
     var voices = [];
-	
-	mod.listening = false;
-	mod.speechRecognition = null;
-	mod.final_transcript = "";
-	mod.interim_transcript = "";
     
     function populateVoiceList() {
       voices = synth.getVoices();
@@ -74,72 +69,121 @@ var $builtinmodule = function(name)
       speechSynthesis.onvoiceschanged = populateVoiceList;
     }
     
-    mod.say = new Sk.builtin.func((text, voice) => {        
-        
-        var utterThis = new SpeechSynthesisUtterance(text);
-		if (voice >= voices.length)
-			voice = 0;
-        utterThis.voice = voices[voice];
-        utterThis.pitch = 1;
-        utterThis.rate = 1;
-        synth.speak(utterThis);        
-        
-        return new Sk.builtin.none;        
-    });
-	
-	mod.isListening = new Sk.builtin.func(() => {   
-		return new Sk.builtin.bool(mod.listening);
-	});
-	
-	mod.getFinalTranscript = new Sk.builtin.func(() => {   
-		return new Sk.builtin.str(mod.final_transcript);
-	});
-	
-	mod.listen = new Sk.builtin.func(() => {        
-        
-		if ("webkitSpeechRecognition" in window) {
-			if (mod.listening) {
-				mod.speechRecognition.stop();
-			}
-			mod.listening = true;
-			mod.final_transcript = "";
-				
-			mod.speechRecognition = new webkitSpeechRecognition();
-			
-			mod.speechRecognition.continuous = true;
-			mod.speechRecognition.interimResults = true;
-			mod.speechRecognition.lang = "en-AU";
+    mod.saySomething = new Sk.builtin.func((text, voice) => {    
+      const badWords = [
+        'YXJzZQ==',         'YXJzZWhvbGU=',     'YmFsbHM=',         'YmFzdGFyZA==',
+        'YmVlZg==',         'Y3VydGFpbnM=',     'Y3Vt',             'YmVsbGVuZA==',
+        'Yml0Y2g=',         'YnVra2FrZQ==',     'YnVsbHNoaXQ=',     'Y2Fjaw==',
+        'Y2hvYWQ=',         'Y29jaw==',         'Y29jayBjaGVlc2U=', 'Y29jayBqb2NrZXk=',
+        'Y29ja3N1Y2tlcg==', 'Y293',             'Y3JhcA==',         'Y3Jpa2V5',
+        'Y3VudA==',         'ZGFtbg==',         'ZGljaw==',         'ZGlja2hlYWQ=',
+        'ZGlsZG8=',         'ZHVmZmVy',         'ZmFubnk=',         'ZmVjaw==',
+        'ZmxhcHM=',         'ZnVjaw==',         'ZnVja2luZyBjdW50', 'ZnVja3RhcmQ=',
+        'Z29kZGFt',         'amVzdXMgY2hyaXN0', 'aml6eg==',         'a25vYg==',
+        'a25vYmhlYWQ=',     'bWFua3k=',         'bWluZ2U=',         'bW90aGVyZnVja2Vy',
+        'bXVudGVy',         'bXVwcGV0',         'bmFmZg==',         'bml0d2l0',
+        'bnVtcHR5',         'bnV0dGVy',         'cGlzcyBvZmY=',     'cGlzcy1mbGFwcw==',
+        'cGlzc2Vk',         'cGlzc2VkIG9mZg==', 'cGxvbmtlcg==',     'cG9uY2U=',
+        'cG9vZg==',         'cG91Zg==',         'cHJpY2s=',         'cHVzc3k=',
+        'cmFwZXk=',         'c2hhZw==',         'c2hpdA==',         'c2thbms=',
+        'c2xhZw==',         'c2xhcHBlcg==',     'c2x1dA==',         'c25hdGNo',
+        'c3B1bms=',         'dGFydA==',         'dGl0',             'dG9zc2Vy',
+        'dHJvbGxvcA==',     'dHdhdA==',         'd2Fua2Vy',         'd2Fua3N0YWlu',
+        'd2hvcmU=',         'Y3VudA==',         'ZmFnZ290',         'bmlnZ2Vy',
+        'cGVuaXM='
+      ]
 
-			mod.speechRecognition.onerror = () => {
-				console.log("Speech Recognition Error");
-			};
-			mod.speechRecognition.onend = () => {
-				console.log("Speech Recognition Ended");
-				console.log("Final transcript" + mod.final_transcript)
-			};
+      const replies = [
+        'nice try',   'better luck next time',                  'do you talk to your grandmother with that foul language?', 
+        'ah nope',    'HELP! this student is trying to swear',  'get back to work please'
+      ]
 
-			mod.speechRecognition.onresult = (event) => {
-				mod.interim_transcript = "";
-
-				for (let i = event.resultIndex; i < event.results.length; ++i) {
-				  if (event.results[i].isFinal) {
-					mod.final_transcript += event.results[i][0].transcript;
-					mod.speechRecognition.stop();
-					mod.listening = false;
-				  } else {
-					mod.interim_transcript += event.results[i][0].transcript;
-				  }
-				}
-			};
-			
-			mod.speechRecognition.start();
-		} else {
-		  console.log("Speech Recognition Not Available");
-		} 
-        
-        return new Sk.builtin.none;        
+      for (let i = 0; i < badWords.length; i++) {
+        let checkWord = atob(badWords[i])
+        if (text.toString().toLowerCase().indexOf(checkWord) > -1) { 
+          text = replies[Math.floor(Math.random() * (replies.length))];
+        }
+      }  
+    
+      var utterThis = new SpeechSynthesisUtterance(text);
+      if (voice >= voices.length) {
+          voice = 0;
+        } 
+      utterThis.voice = voices[voice];
+      utterThis.pitch = 1;
+      utterThis.rate = 1;
+      synth.speak(utterThis);        
+      
+      return new Sk.builtin.none;       
     });
 
+    mod.startListen = new Sk.builtin.func(() => {
+      const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+      const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+
+      mod.recognition = new SpeechRecognition();
+
+      mod.listening = true;
+      mod.final_transcript = "";
+      mod.interim_transcript = "";
+      mod.recognition.continuous = true;
+      mod.recognition.lang = 'en-AU';
+      mod.recognition.interimResults = true;
+      mod.recognition.maxAlternatives = 1;
+
+      mod.recognition.onresult = function(event) {
+        mod.interim_transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            mod.final_transcript += event.results[i][0].transcript;
+          } else {
+            mod.interim_transcript += event.results[i][0].transcript;
+          }
+        }
+      }
+
+      mod.recognition.onspeechend = function() {
+        mod.listening = false;
+      } 
+
+      mod.recognition.onnomatch = function(event) {
+        console.log("I didn\'t recognize that, sorry.");
+      }
+      
+      mod.recognition.onerror = function(event) {
+        console.log("Error occurred in recognition: " + event.error);
+      }
+
+      mod.recognition.start();
+      // we could make it sleep here, then mod.recgonition.stop(), but idk how to make javascript sleep
+      return new Sk.builtin.none; 
+    })
+
+    mod.isListening = new Sk.builtin.func(() => {   
+      return new Sk.builtin.bool(mod.listening);
+    });
+    
+    mod.getFinalTranscript = new Sk.builtin.func(() => {   
+      return new Sk.builtin.str(mod.final_transcript);
+    });
+
+    mod.getInterimTranscript = new Sk.builtin.func(() => {   
+      return new Sk.builtin.str(mod.interim_transcript);
+    });
+
+    mod.stopListen = new Sk.builtin.func(() => {   
+      var text = "";
+      if (mod.final_transcript != ""){
+        text = new Sk.builtin.str(mod.final_transcript);
+      } else{
+        text = new Sk.builtin.str(mod.interim_transcript);
+      }
+      mod.recognition.stop();
+      mod.listening = false;
+      return text  
+    });
     
     return mod;
 }
+
+// test comment to make sure github set up properly
