@@ -132,9 +132,18 @@ var $builtinmodule = function(name)
         this.onBLENotifyCallback=callbackFunction;
       }
 
-      writePin(pin) {
+      writePin(pin, value) {
         //something like this should work, but we need to create the correct buffer
-        //this.characteristic.IO_PIN_DATA.writeValue(data);
+        var buffer = new Uint8Array(2);
+        buffer[0] = pin;
+        buffer[1] = value;                   
+        if(this.connected){
+          this.characteristic.IO_PIN_DATA.writeValue(buffer)
+          .then(_ => {})
+          .catch(error => {
+            console.log(error);
+          });
+        }        
       }
 
       readPin(pin) {
@@ -664,7 +673,11 @@ var $builtinmodule = function(name)
 		$loc.isRecording = new Sk.builtin.func((self) => {
 			return new Sk.builtin.bool(self.isRecording);  
 		});
-
+        
+        $loc.writePin = new Sk.builtin.func((self, pin, value) => {
+            self.microBit.writePin(pin, value);
+        });
+    
     },
     'Microbit', []);
     

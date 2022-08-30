@@ -126,7 +126,7 @@ var $builtinmodule = function(name)
       mod.listening = true;
       mod.final_transcript = "";
       mod.interim_transcript = "";
-      mod.recognition.continuous = true;
+      mod.recognition.continuous = false;
       mod.recognition.lang = 'en-AU';
       mod.recognition.interimResults = true;
       mod.recognition.maxAlternatives = 1;
@@ -145,6 +145,10 @@ var $builtinmodule = function(name)
       mod.recognition.onspeechend = function() {
         mod.listening = false;
       } 
+      
+      mod.recognition.onsoundend = function() {
+        mod.listening = false;
+      }       
 
       mod.recognition.onnomatch = function(event) {
         console.log("I didn\'t recognize that, sorry.");

@@ -8,10 +8,10 @@ class Microbit:
         print("Trying to connect...")
         if blockUntilConnect:
             while not self.uBit.isConnected():
-#                if showProgress:                               <<<< uncomment this to add in details about connection
-#                    msg = self.uBit.dequeueStatusMessage()
-#                    if len(msg) > 0:
-#                        print(msg)
+                if showProgress:                               #<<<< uncomment this to add in details about connection
+                    msg = self.uBit.dequeueStatusMessage()
+                    if len(msg) > 0:
+                        print(msg)
                 continue
             self.name = self.uBit.getName()
         if showProgress:
@@ -109,6 +109,9 @@ class Microbit:
     def fill(self):                             # Turns on all LEDs
         self.uBit.fillLED()
         sleep(0.05)
+        
+    def writePin(self, pin, value):
+        self.uBit.writePin(pin, value)
 
     def stopRecordData(self):
         return self.uBit.stopRecordData()
