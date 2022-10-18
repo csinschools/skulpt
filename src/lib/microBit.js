@@ -69,9 +69,11 @@ var $builtinmodule = function(name)
         this.temperature = 0;
 
         this.buttonA = 0;
+        this.buttonAPressed = false;
         this.buttonACallBack=function(){};
 
         this.buttonB = 0;
+        this.buttonBPressed = false;
         this.buttonBCallBack=function(){};
 
         this.connected = false;
@@ -90,6 +92,14 @@ var $builtinmodule = function(name)
           LED_TEXT: {},
           LED_SCROLL: {},
         }
+
+        this.ledMatrix = [
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0']
+        ];           
       }
 	 
       getTemperature() {
@@ -212,16 +222,32 @@ var $builtinmodule = function(name)
 
         //BUTTON CHARACTERISTIC
         if (event.target.uuid == BTN_A_STATE) {
-          //console.log("BTN_A_STATE", event.target.value.getInt8());
-          this.buttonA = event.target.value.getInt8();
+          console.log("BTN_A_STATE", event.target.value.getInt8());
+          var result = event.target.value.getInt8();
+          // previously released and now held down
+          if (this.buttonA == 0 && result != 0) {
+            this.buttonAPressed = true;
+          } 
+          else {
+            this.buttonAPressed = false;
+          }
+          this.buttonA = result;
           if (this.buttonA){
             this.onButtonA();
           }
         }
 
         if (event.target.uuid == BTN_B_STATE) {
-          //console.log("BTN_B_STATE", event.target.value.getInt8());
-          this.buttonB = event.target.value.getInt8();
+          console.log("BTN_B_STATE", event.target.value.getInt8());
+          var result = event.target.value.getInt8();
+          // previously released and now held down
+          if (this.buttonB == 0 && result != 0) {
+            this.buttonBPressed = true;
+          } 
+          else {
+            this.buttonBPressed = false;
+          }          
+          this.buttonB = result;
           if (this.buttonB){
             this.onButtonB();
           }
@@ -334,351 +360,357 @@ var $builtinmodule = function(name)
       ['1', '0', '0', '0', '1']
     ]    
 
-
     var mod = {};
     
     mod.Microbit = Sk.misceval.buildClass(mod, function($gbl, $loc) {
-        $loc.__init__ = new Sk.builtin.func(function(self) {         
-            filters: []
-            var options = {};
-            options.acceptAllDevices = true;
-            options.optionalServices = [ACCEL_SRV, MAGNETO_SRV, BTN_SRV, IO_PIN_SRV, LED_SRV, TEMP_SRV];
+      $loc.__init__ = new Sk.builtin.func(function(self) {         
+        filters: []
+        var options = {};
+        options.acceptAllDevices = true;
+        options.optionalServices = [ACCEL_SRV, MAGNETO_SRV, BTN_SRV, IO_PIN_SRV, LED_SRV, TEMP_SRV];
 
-            self.microBit = new uBit();
+        self.microBit = new uBit();
 					
-			self.writableHandle = null;
-			self.interval = null;
-			self.isRecording = false;
-			
-			self.statusMessages = [];
-			
-			self.recordButtonA = async function() {
-				if (self.writableHandle !== null)
-				{
-					await self.writableHandle.write(new Date().toLocaleString() + ",A\n");
-				}
-			};
-			
-			self.recordButtonB = async function() {
-				if (self.writableHandle !== null)
-				{
-					await self.writableHandle.write(new Date().toLocaleString() + ",B\n");
-				}
-			};
-                       
+        self.writableHandle = null;
+        self.interval = null;
+        self.isRecording = false;
+       
+        self.statusMessages = [];
 
-			self.stopRecordData = async function()
-			{
-				if (self.interval !== null)
-				{
-					window.clearInterval(self.interval);
-					self.interval = null;
-				}
-				if (self.writableHandle !== null)
-				{
-					// Close the file and write the contents to disk.
-					await self.writableHandle.close();
-					self.writableHandle = null;
-				}
-				self.isRecording = false;
-			}
-			
-			self.recordTempAccelerometer = async function()
-			{
-				var now = new Date();
-				var ms = "00" + now.getMilliseconds();
-				var strNow = now.toLocaleString() + "," + ms.substr(ms.length - 3);
-				await self.writableHandle.write(strNow + "," + self.microBit.temperature + "," + self.microBit.accelerometer.x + "," + self.microBit.accelerometer.y + "," + self.microBit.accelerometer.z + "\n");
-			}
-			
-			self.recordTemp = async function()
-			{
-				await self.writableHandle.write(new Date().toLocaleString() + "," + self.microBit.temperature + "\n");
-			}
-			
-			self.recordAccelerometer = async function()
-			{
-				await self.writableHandle.write(new Date().toLocaleString() + "," + self.microBit.accelerometer.x + "," + self.microBit.accelerometer.y + "," + self.microBit.accelerometer.z + "\n");
-			}
-			
-			self.microBit.setButtonACallback(self.recordButtonA);
-			
-			self.microBit.setButtonBCallback(self.recordButtonB);		
-			
-			self.recordDataFunc = async function(interval)
-			{
-			  const options = {
-				suggestedName: filename,
-				types: [
-				  {
-					
-					description: 'Text Files',
-					accept: {
-					  'text/plain': ['.txt'],
-					},
-				  },
-				],
-			  };
-			  const fileHandle = await window.showSaveFilePicker(options);
-			  
-			  self.writableHandle = await fileHandle.createWritable();
-			  
-			  if (interval > 0)
-			  {
-				  //self.interval = window.setInterval(self.recordTemp, interval);
-				  self.interval = window.setInterval(self.recordTempAccelerometer, interval);
-			  }
-			  self.isRecording = true;
-			}	
+        self.recordButtonA = async function() {
+          if (self.writableHandle !== null)
+          {
+            await self.writableHandle.write(new Date().toLocaleString() + ",A\n");
+          }
+        };
+        
+        self.recordButtonB = async function() {
+          if (self.writableHandle !== null)
+          {
+            await self.writableHandle.write(new Date().toLocaleString() + ",B\n");
+          }
+        };
+                        
 
-			self.statusMessages.push("Requesting bluetooth device...");			
+        self.stopRecordData = async function()
+        {
+          if (self.interval !== null)
+          {
+            window.clearInterval(self.interval);
+            self.interval = null;
+          }
+          if (self.writableHandle !== null)
+          {
+            // Close the file and write the contents to disk.
+            await self.writableHandle.close();
+            self.writableHandle = null;
+          }
+          self.isRecording = false;
+        }
+        
+        self.recordTempAccelerometer = async function()
+        {
+          var now = new Date();
+          var ms = "00" + now.getMilliseconds();
+          var strNow = now.toLocaleString() + "," + ms.substr(ms.length - 3);
+          await self.writableHandle.write(strNow + "," + self.microBit.temperature + "," + self.microBit.accelerometer.x + "," + self.microBit.accelerometer.y + "," + self.microBit.accelerometer.z + "\n");
+        }
+        
+        self.recordTemp = async function()
+        {
+          await self.writableHandle.write(new Date().toLocaleString() + "," + self.microBit.temperature + "\n");
+        }
+        
+        self.recordAccelerometer = async function()
+        {
+          await self.writableHandle.write(new Date().toLocaleString() + "," + self.microBit.accelerometer.x + "," + self.microBit.accelerometer.y + "," + self.microBit.accelerometer.z + "\n");
+        }
+        
+        self.microBit.setButtonACallback(self.recordButtonA);
+        
+        self.microBit.setButtonBCallback(self.recordButtonB);		
+        
+        self.recordDataFunc = async function(interval)
+        {
+          const options = {
+          suggestedName: filename,
+          types: [
+            {
+            
+            description: 'Text Files',
+            accept: {
+              'text/plain': ['.txt'],
+            },
+            },
+          ],
+          };
+          const fileHandle = await window.showSaveFilePicker(options);
+          
+          self.writableHandle = await fileHandle.createWritable();
+          
+          if (interval > 0)
+          {
+            //self.interval = window.setInterval(self.recordTemp, interval);
+            self.interval = window.setInterval(self.recordTempAccelerometer, interval);
+          }
+          self.isRecording = true;
+        }	
 
-            navigator.bluetooth.requestDevice(options)
-            .then(device => {
+        //self.statusMessages.push("Requesting bluetooth device...");			
 
-                self.device = device;
-                console.log('> Name:             ' + device.name);
-                console.log('> Id:               ' + device.id);
-				
-				self.statusMessages.push("Device found: " + device.name + ", " + device.id);	
+        navigator.bluetooth.requestDevice(options)
+          .then(device => {
+            self.device = device;
+            console.log('> Name:             ' + device.name);
+            console.log('> Id:               ' + device.id);
+          
+            //self.statusMessages.push("Device found: " + device.name + ", " + device.id);	
 
-                // Attempts to connect to remote GATT Server.
-                return device.gatt.connect();
+            // Attempts to connect to remote GATT Server.
+            return device.gatt.connect();
+          })
+          .then(server => {
+            // Note that we could also get all services that match a specific UUID by
+            // passing it to getPrimaryServices().
+            console.log('Getting Services...');
+            //self.statusMessages.push("Getting services, please wait...");	
+            return server.getPrimaryServices();
+          })
+          .then(services => {
+            console.log('Getting Characteristics...');
+            //self.statusMessages.push("Getting characteristics...");	
+            let queue = Promise.resolve();
+            services.forEach(service => {
+              queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
+                //self.statusMessages.push("Service retrieved:" + service.uuid + ":" + BLE_LOOKUP[service.uuid]);	
+                console.log('> Service: ' + service.uuid);
+                characteristics.forEach(characteristic => {
+                  //self.statusMessages.push("Characteristics retrieved:" + characteristic.uuid + ":" + BLE_LOOKUP[characteristic.uuid]);
+                  console.log('>> Characteristic: ' + characteristic.uuid + ' ' + getSupportedProperties(characteristic));
 
-            })
-            .then(server => {
-              // Note that we could also get all services that match a specific UUID by
-              // passing it to getPrimaryServices().
-              console.log('Getting Services...');
-			  self.statusMessages.push("Getting services, please wait...");	
-              return server.getPrimaryServices();
-            })
-            .then(services => {
-              console.log('Getting Characteristics...');
-			  self.statusMessages.push("Getting characteristics...");	
-              let queue = Promise.resolve();
-              services.forEach(service => {
-                queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
-				  self.statusMessages.push("Service retrieved:" + service.uuid + ":" + BLE_LOOKUP[service.uuid]);	
-                  console.log('> Service: ' + service.uuid);
-                  characteristics.forEach(characteristic => {
-					self.statusMessages.push("Characteristics retrieved:" + characteristic.uuid + ":" + BLE_LOOKUP[characteristic.uuid]);
-                    console.log('>> Characteristic: ' + characteristic.uuid + ' ' +
-                      getSupportedProperties(characteristic));
+                  //need to store all the characteristic I want to write to be able to access them later.
+                  switch (characteristic.uuid) {
+                    case IO_PIN_DATA:
+                      self.microBit.characteristic.IO_PIN_DATA = characteristic;
+                      break;
 
-                    //need to store all the characteristic I want to write to be able to access them later.
-                    switch (characteristic.uuid) {
-                      case IO_PIN_DATA:
-                        self.microBit.characteristic.IO_PIN_DATA = characteristic;
-                        break;
+                    case IO_AD_CONFIG:
+                      self.microBit.characteristic.IO_AD_CONFIG = characteristic;
+                      break;
 
-                      case IO_AD_CONFIG:
-                        self.microBit.characteristic.IO_AD_CONFIG = characteristic;
-                        break;
+                    case IO_PIN_CONFIG:
+                      self.microBit.characteristic.IO_PIN_CONFIG = characteristic;
+                      break;
 
-                      case IO_PIN_CONFIG:
-                        self.microBit.characteristic.IO_PIN_CONFIG = characteristic;
-                        break;
+                    case IO_PIN_PWM:
+                      self.microBit.characteristic.IO_PIN_PWM = characteristic;
+                      break;
 
-                      case IO_PIN_PWM:
-                        self.microBit.characteristic.IO_PIN_PWM = characteristic;
-                        break;
+                    case LED_STATE:
+                      self.microBit.characteristic.LED_STATE = characteristic;
+                      self.microBit.connected = true;
 
-                      case LED_STATE:
-                        self.microBit.characteristic.LED_STATE = characteristic;
-                        self.microBit.connected = true;
+                      break;
 
-                        break;
+                    case LED_TEXT:
+                      self.microBit.characteristic.LED_TEXT = characteristic;
+                      break;
 
-                      case LED_TEXT:
-                        self.microBit.characteristic.LED_TEXT = characteristic;
-                        break;
+                    case LED_SCROLL:
+                      self.microBit.characteristic.LED_SCROLL = characteristic;
+                      break;
 
-                      case LED_SCROLL:
-                        self.microBit.characteristic.LED_SCROLL = characteristic;
-                        break;
+                    default:
+                  }
 
-                      default:
-                    }
+                  if (getSupportedProperties(characteristic).includes('NOTIFY')) {
+                    characteristic.startNotifications().catch(err => console.log('startNotifications', err));
+                    characteristic.addEventListener('characteristicvaluechanged',
+                      self.microBit.characteristic_updated.bind(self.microBit));
+                  }
+                });
+              }));
+            });                        
+            return queue;
+          })
+          .catch(error => {
+            console.log('Argh! ' + error);
+            self.statusMessages.push("Error: " + error);	
+            self.statusMessages.push("Error: Try re-running the program and pairing the microbit again.");	
+          });
 
-                    if (getSupportedProperties(characteristic).includes('NOTIFY')) {
-                      characteristic.startNotifications().catch(err => console.log('startNotifications', err));
-                      characteristic.addEventListener('characteristicvaluechanged',
-                        self.microBit.characteristic_updated.bind(self.microBit));
-                    }
-                  });
-                }));
-              });
-              
-              
-              return queue;
-            })
-            .catch(error => {
-              console.log('Argh! ' + error);
-            });
-
-            return;
-        });
+        return;
+      });
 		
-		var ledMatrix = [
-		  ['0', '0', '0', '0', '0'],
-		  ['0', '0', '0', '0', '0'],
-		  ['0', '0', '0', '0', '0'],
-		  ['0', '0', '0', '0', '0'],
-		  ['0', '0', '0', '0', '0']
-		]
+      //function updatePixel(x,y,value){
+      $loc.updatePixel = new Sk.builtin.func((self, x, y, value) => {
+        //console.log(self.microBit.ledMatrix);
+        if (Sk.ffi.remapToJs(value) == true) {
+          self.microBit.ledMatrix[x][y]='1';
+        }
+        else if (Sk.ffi.remapToJs(value) == false) {
+          self.microBit.ledMatrix[x][y]='0';
+        }
+        //console.log(self.microBit.ledMatrix);
+        self.microBit.writeMatrixIcon(self.microBit.ledMatrix);	 
+      });
 
-		//function updatePixel(x,y,value){
-		$loc.updatePixel = new Sk.builtin.func((self, x, y, value) => {
-			if (value == "True") 
-			{
-				ledMatrix[x][y]=1;
-			}
-			else if (value == "False") 
-			{
-				ledMatrix[x][y]=0;
-			}
-			self.microBit.writeMatrixIcon(ledMatrix);	 
-		});
-		
-		$loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
-			msg = "";
-			if (self.statusMessages.length != 0) {
-				msg = self.statusMessages[0];
-				self.statusMessages.shift();
-			}
-			return new Sk.builtin.str(msg);  
-		});
-		
-		$loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
-			msg = "";
-			if (self.statusMessages.length != 0) {
-				msg = self.statusMessages[0];
-				self.statusMessages.shift();
-			}
-			return new Sk.builtin.str(msg);  
-		});
-		
-		$loc.clearLED = new Sk.builtin.func((self) => {
-			ledMatrix = [
-			  ['0', '0', '0', '0', '0'],
-			  ['0', '0', '0', '0', '0'],
-			  ['0', '0', '0', '0', '0'],
-			  ['0', '0', '0', '0', '0'],
-			  ['0', '0', '0', '0', '0']
-			]
-			self.microBit.writeMatrixIcon(ledMatrix);
-		  
-			return new Sk.builtin.none;  
-		});
-		
-		$loc.fillLED = new Sk.builtin.func((self) => {
-			ledMatrix = [
-			  ['1', '1', '1', '1', '1'],
-			  ['1', '1', '1', '1', '1'],
-			  ['1', '1', '1', '1', '1'],
-			  ['1', '1', '1', '1', '1'],
-			  ['1', '1', '1', '1', '1']
-			]
-			self.microBit.writeMatrixIcon(ledMatrix);
-		  
-			return new Sk.builtin.none;  
-		});
+      $loc.getName = new Sk.builtin.func( () => {
+        return new Sk.builtin.str(self.device.name);
+      });
+      
+      $loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
+        msg = "";
+        if (self.statusMessages.length != 0) {
+          msg = self.statusMessages[0];
+          self.statusMessages.shift();
+        }
+        return new Sk.builtin.str(msg);  
+      });
+      
+      $loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
+        msg = "";
+        if (self.statusMessages.length != 0) {
+          msg = self.statusMessages[0];
+          self.statusMessages.shift();
+        }
+        return new Sk.builtin.str(msg);  
+      });
+      
+      $loc.clearLED = new Sk.builtin.func((self) => {
+        self.microBit.ledMatrix = [
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0'],
+          ['0', '0', '0', '0', '0']
+        ]
+        self.microBit.writeMatrixIcon(self.microBit.ledMatrix);
+        
+        return new Sk.builtin.none;  
+      });
+      
+      $loc.fillLED = new Sk.builtin.func((self) => {
+        self.microBit.ledMatrix = [
+          ['1', '1', '1', '1', '1'],
+          ['1', '1', '1', '1', '1'],
+          ['1', '1', '1', '1', '1'],
+          ['1', '1', '1', '1', '1'],
+          ['1', '1', '1', '1', '1']
+        ]
+        self.microBit.writeMatrixIcon(self.microBit.ledMatrix);
+        
+        return new Sk.builtin.none;  
+      });
     
-        $loc.setText = new Sk.builtin.func((self, scrollText) => {
-          var text = "" + scrollText;
-          console.log("Updating Scrolling text:" + text);
-          self.microBit.writeMatrixText(text);
-          return new Sk.builtin.none;  
-        });    		
+      $loc.setText = new Sk.builtin.func((self, scrollText) => {
+        var text = "" + scrollText;
+        console.log("Updating Scrolling text:" + text);
+        self.microBit.writeMatrixText(text);
+        return new Sk.builtin.none;  
+      });    		
 
-        $loc.isConnected = new Sk.builtin.func((self) => {
-            return new Sk.builtin.bool(self.microBit.connected);   
-        });
+      $loc.isConnected = new Sk.builtin.func((self) => {
+          return new Sk.builtin.bool(self.microBit.connected);   
+      });
+      
+      $loc.getName = new Sk.builtin.func((self) => {
+          return new Sk.builtin.str(self.device.name);
+      });
+
+      $loc.isButtonAPressed = new Sk.builtin.func((self) => {
+        var result = self.microBit.buttonAPressed;
+        // debounce
+        self.microBit.buttonAPressed = false;
+        return new Sk.builtin.bool(result);
+      });
+
+      $loc.isButtonBPressed = new Sk.builtin.func((self) => {
+        var result = self.microBit.buttonBPressed;
+        // debounce
+        self.microBit.buttonBPressed = false;
+        return new Sk.builtin.bool(result);
+      });      
+      
+      $loc.getButtonA = new Sk.builtin.func((self) => {
+          if (self.microBit.buttonA > 0){
+            msg = 1;
+          } else {
+            msg = 0;
+          }
+          return new Sk.builtin.int_(msg);
+      });
+  
+      $loc.getButtonB = new Sk.builtin.func((self) => {
+          if (self.microBit.buttonB > 0){
+            msg = 1;
+          } else {
+            msg = 0;
+          }
+          return new Sk.builtin.int_(msg);
+      });
+		
+      $loc.getTemperature = new Sk.builtin.func((self) => {
+              return new Sk.builtin.int_(self.microBit.temperature);
+          });
+      
+      $loc.getBearing = new Sk.builtin.func((self) => {
+              return new Sk.builtin.int_(self.microBit.magnetometer_bearing);
+          });
+      
+      $loc.getMagnetometerX = new Sk.builtin.func((self) => {
+              return new Sk.builtin.int_(self.microBit.magnetometer_raw.x);
+          });
+      
+      $loc.getMagnetometerY = new Sk.builtin.func((self) => {
+              return new Sk.builtin.int_(self.microBit.magnetometer_raw.y);
+          });
+      
+      $loc.getMagnetometerZ = new Sk.builtin.func((self) => {
+              return new Sk.builtin.int_(self.microBit.magnetometer_raw.z);
+          });
         
-        $loc.getName = new Sk.builtin.func((self) => {
-            return new Sk.builtin.str(self.device.name);
-        });
+      $loc.getAccelerometerX = new Sk.builtin.func((self) => {
+              return new Sk.builtin.float_((self.microBit.accelerometer.x/1000*9.8).toFixed(1));
+          });
+      
+      $loc.getAccelerometerY = new Sk.builtin.func((self) => {
+              return new Sk.builtin.float_((self.microBit.accelerometer.y/1000*9.8).toFixed(1));
+          });
+      
+      $loc.getAccelerometerZ = new Sk.builtin.func((self) => {
+              return new Sk.builtin.float_((self.microBit.accelerometer.z/1000*9.8).toFixed(1));
+          });
+      
+      $loc.recordData = new Sk.builtin.func((self, interval) => {
+        let modal = document.querySelector(".modal");
+        let closeBtn = document.querySelector(".close-btn");
+        let okBtn = document.querySelector(".ok-btn");
         
-        $loc.getButtonA = new Sk.builtin.func((self) => {
-            if (self.microBit.buttonA > 0){
-              msg = 1;
-            } else {
-              msg = 0;
-            }
-            return new Sk.builtin.int_(msg);
-        });
-		
-        $loc.getButtonB = new Sk.builtin.func((self) => {
-            if (self.microBit.buttonB > 0){
-              msg = 1;
-            } else {
-              msg = 0;
-            }
-            return new Sk.builtin.int_(msg);
-        });
-		
-		$loc.getTemperature = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.temperature);
-        });
-		
-		$loc.getBearing = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.magnetometer_bearing);
-        });
-		
-		$loc.getMagnetometerX = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.magnetometer_raw.x);
-        });
-		
-		$loc.getMagnetometerY = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.magnetometer_raw.y);
-        });
-		
-		$loc.getMagnetometerZ = new Sk.builtin.func((self) => {
-            return new Sk.builtin.int_(self.microBit.magnetometer_raw.z);
-        });
-			
-		$loc.getAccelerometerX = new Sk.builtin.func((self) => {
-            return new Sk.builtin.float_((self.microBit.accelerometer.x/1000*9.8).toFixed(1));
-        });
-		
-		$loc.getAccelerometerY = new Sk.builtin.func((self) => {
-            return new Sk.builtin.float_((self.microBit.accelerometer.y/1000*9.8).toFixed(1));
-        });
-		
-		$loc.getAccelerometerZ = new Sk.builtin.func((self) => {
-            return new Sk.builtin.float_((self.microBit.accelerometer.z/1000*9.8).toFixed(1));
-        });
-		
-		$loc.recordData = new Sk.builtin.func((self, interval) => {
-			let modal = document.querySelector(".modal");
-			let closeBtn = document.querySelector(".close-btn");
-			let okBtn = document.querySelector(".ok-btn");
-			
-			modal.style.display = "block";
-			
-			closeBtn.onclick = function(){
-			  modal.style.display = "none";
-			}
-			okBtn.onclick = function(){
-			  modal.style.display = "none";
-			  self.recordDataFunc(interval);
-			}
-        });
-		
-		$loc.stopRecordData = new Sk.builtin.func((self) => {
-			self.stopRecordData();
-        });
-		
-		$loc.isRecording = new Sk.builtin.func((self) => {
-			return new Sk.builtin.bool(self.isRecording);  
-		});
+        modal.style.display = "block";
         
-        $loc.writePin = new Sk.builtin.func((self, pin, value) => {
-            self.microBit.writePin(pin, value);
-        });
-    
-    },
+        closeBtn.onclick = function(){
+          modal.style.display = "none";
+        }
+        okBtn.onclick = function(){
+          modal.style.display = "none";
+          self.recordDataFunc(interval);
+        }
+          });
+      
+      $loc.stopRecordData = new Sk.builtin.func((self) => {
+        self.stopRecordData();
+          });
+      
+      $loc.isRecording = new Sk.builtin.func((self) => {
+        return new Sk.builtin.bool(self.isRecording);  
+      });
+          
+          $loc.writePin = new Sk.builtin.func((self, pin, value) => {
+              self.microBit.writePin(pin, value);
+          });
+      
+      },
     'Microbit', []);
     
     return mod;

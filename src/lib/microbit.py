@@ -1,5 +1,6 @@
 import microBit
 from time import sleep
+from csinsc import Colour
 
 
 class Microbit:
@@ -11,7 +12,10 @@ class Microbit:
                 if showProgress:                               #<<<< uncomment this to add in details about connection
                     msg = self.uBit.dequeueStatusMessage()
                     if len(msg) > 0:
-                        print(msg)
+                        if msg[:5].lower() == "error":
+                            print(Colour.red + msg + Colour.reset)
+                        else:
+                            print(msg)
                 continue
             self.name = self.uBit.getName()
         if showProgress:
@@ -22,6 +26,9 @@ class Microbit:
             print("Successfully connected")
             print("Houston, I'm ready to run code.")
             print("- - - - - - - - - - - - - - - - - - - - - - - - -")
+    
+    def getName(self):
+        return self.uBit.getName()
 
     def setText(self, text):                    # scrolls the text across the screen
         self.uBit.setText(text)
@@ -29,10 +36,16 @@ class Microbit:
     def print(self, text):                      # scrolls the text across the screen
         self.uBit.setText(text)
 
-    def getButtonA(self):                       # return 0 if not pressed, 1 if pressed
+    def isButtonAPressed(self):                 # returns whether button A was pressed (ie. released and now held)
+        return self.uBit.isButtonAPressed()
+
+    def isButtonBPressed(self):                       
+        return self.uBit.isButtonBPressed()     # returns whether button B was pressed (ie. released and now held)
+
+    def getButtonA(self):                       # return 0 if not held down, 1 if held down
         return self.uBit.getButtonA()
 
-    def getButtonB(self):                       # return 0 if not pressed, 1 if pressed
+    def getButtonB(self):                       # return 0 if not held down, 1 if held down
         return self.uBit.getButtonB()
 
     def getButtons(self):                       # returns a list of [button A, button B]

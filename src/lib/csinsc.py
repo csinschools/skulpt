@@ -39,7 +39,8 @@ class Style:
 def say(text, voice = 0):
     csinscTools.saySomething(text, voice)
     
-def listenForSeconds(t):
+#def listenForSeconds(t):
+def listen(t):
     csinscTools.startListen()
     sleep(t)
     response = csinscTools.stopListen()
@@ -75,13 +76,22 @@ def slowPrint(text, delay = 0.1, newline = True):
 def slowWrite(text, delay = 0.1):
     slowPrint(text, delay, newline = False)    
 
-def listen(text = ""):
+
+#def listen(text = ""):
+def listenWithText(text = ""):
     print(text, end= "")
     csinscTools.startListen()
     while csinscTools.isListening():
         continue
     response = csinscTools.stopListen()
+    print(response)
     return response
         
 def sendsms(number, text):
     csinscTools.sendsms(number, text)    
+
+def playSound(url):
+    csinscTools.playSound(url)
+
+def playFreeSoundOrg(id):
+    csinscTools.playFreeSoundOrg(id)

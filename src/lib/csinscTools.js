@@ -186,6 +186,45 @@ var $builtinmodule = function(name)
       mod.listening = false;
       return text  
     });
+
+    mod.playSound = new Sk.builtin.func((url) => {
+      var audioElement = new Audio(url);
+      audioElement.play();      
+    });
+
+    mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
+      var xhr = new XMLHttpRequest();      
+      const requestURL =  "https://freesound.org/apiv2/sounds/" + id + "/?fields=previews&format=json&token=Vzf4dkU29E5ltPX1sfi2aqCkzG1aKgbITklKHROh";
+      console.log(requestURL);
+      xhr.open("GET", requestURL, true);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.timeout = 10000; // time in milliseconds
+  
+      xhr.ontimeout = (e) => {
+        console.log("Timeout");
+      };    
+    
+      xhr.onerror = function() {
+        console.log("Error");
+      }
+      
+      xhr.onreadystatechange = function() {
+        console.log("Response:" + xhr.responseText);
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          if (xhr.responseText.length == 0) {
+          }
+          else {
+            
+            const response = JSON.parse(xhr.responseText);
+            const url = response["previews"]["preview-hq-ogg"];
+            var audioElement = new Audio(url);
+            audioElement.play();              
+          }
+        }
+      } 
+      
+      xhr.send();    
+    });
     
     return mod;
 }
