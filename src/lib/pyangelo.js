@@ -105,6 +105,18 @@ var $builtinmodule = function(name)
         _keysDown[e.key] = true;        
         delete(_keysUp[e.key]);         
     }
+
+    mod.overlaps = new Sk.builtin.func((x1, y1, w1, h1, x2, y2, w2, h2) => {
+        return !(x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1);
+    });
+
+    mod.getStringWidth = new Sk.builtin.func((text, font) => {        
+        let context = document.createElement('canvas').getContext("2d");
+        context.font = font;
+        width = context.measureText(text).width;
+        return new Sk.builtin.int_(Math.round(width));         
+    });
+
     
     mod.isKeyPressed = new Sk.builtin.func((key) => {
         return new Sk.builtin.bool(key in _keysDown);
@@ -166,6 +178,22 @@ var $builtinmodule = function(name)
 
         _commands.push([_clearScreen, args]);
         return new Sk.builtin.none;
+    });
+
+    mod.printAt = new Sk.builtin.func((text, col, row, color, g , b, a) => {        
+        args = {};
+        
+        args.font = "20px monospace";      
+        
+        args.fillStyle = getColour(color);
+        
+        args.text = text;
+        args.x = col * 10;
+        args.y = row * 20;
+        
+        _commands.push([_drawText, args]);
+        
+        return new Sk.builtin.none;        
     });
        
     mod.drawText = new Sk.builtin.func((text, x, y, font, color, g , b, a) => {        

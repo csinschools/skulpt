@@ -95,3 +95,9 @@ def playSound(url):
 
 def playFreeSoundOrg(id):
     csinscTools.playFreeSoundOrg(id)
+
+def printImage(url):
+    addImage(url, None, None)
+    # block until loaded
+    while not imageLoaded:
+        continue
