@@ -576,6 +576,12 @@ var $builtinmodule = function(name)
         }
         return new Sk.builtin.str(msg);  
       });
+
+      $loc.setLEDs = new Sk.builtin.func((self, matrix) => {
+        self.microBit.ledMatrix = Sk.ffi.remapToJs(matrix)
+        self.microBit.writeMatrixIcon(self.microBit.ledMatrix);
+        return new Sk.builtin.none;  
+      });
       
       $loc.clearLED = new Sk.builtin.func((self) => {
         self.microBit.ledMatrix = [

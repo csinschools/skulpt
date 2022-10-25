@@ -20,6 +20,8 @@ var $builtinmodule = function(name)
     colours[Sk.builtins.WHITE] = "rgba(255, 255, 255, 1)";
     colours[Sk.builtins.RED] = "rgba(255, 0, 0, 1)";
     colours[Sk.builtins.GREEN] = "rgba(0, 255, 0, 1)";
+    colours[Sk.builtins.YELLOW] = "rgba(255, 255, 0, 1)";
+    colours[Sk.builtins.VIOLET] = "rgba(255, 0, 255, 1)";
     colours[Sk.builtins.BLUE] = "rgba(0, 0, 255, 1)";
     
     mod.width = new Sk.builtin.int_(canvas.width);
@@ -137,7 +139,7 @@ var $builtinmodule = function(name)
         _commands = [];
     });
     
-    function getColour(color, defaultCol)
+    function getColour(color, defaultCol, b, a)
     {
         var rgba;
         
@@ -158,7 +160,7 @@ var $builtinmodule = function(name)
             rgba = color;
         }
         else {
-            rgba = "rgba(" + color + "," + g + "," + b + "," + a + ")";
+            rgba = "rgba(" + color + "," + defaultCol + "," + b + "," + a + ")";
         }            
         return rgba;
     }
@@ -174,7 +176,10 @@ var $builtinmodule = function(name)
         
         args = {};
         
-        args.fillStyle = getColour(color, mod.BLACK);
+        if (g !== "undefined")
+            args.fillStyle = getColour(color, g, b, a);
+        else 
+            args.fillStyle = getColour(color, mod.BLACK);
 
         _commands.push([_clearScreen, args]);
         return new Sk.builtin.none;
