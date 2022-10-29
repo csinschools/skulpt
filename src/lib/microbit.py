@@ -111,6 +111,10 @@ class Microbit:
         self.uBit.updatePixel(4 - row, col, value)
         sleep(0.05)
 
+    def setLEDs(self, matrix):
+        self.uBit.setLEDs(matrix)
+
+
     def setLED(self, col, row, value):          # True: turns LED on, False: turns LED off
         self.uBit.updatePixel(4 - row, col, value)
         sleep(0.05)
