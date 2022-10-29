@@ -49,6 +49,15 @@ var $builtinmodule = function(name)
 		'e95d9250-251d-470a-a062-fa1922dfa9a8': 'TEMP_DATA',
 		'e95d1b25-251d-470a-a062-fa1922dfa9a8': 'TEMP_PERIOD'
 	};
+
+	var SRV_LOOKUP = {
+		'e95d0753-251d-470a-a062-fa1922dfa9a8': 'accelerometer',
+		'e95df2d8-251d-470a-a062-fa1922dfa9a8': 'magnetometer',
+		'e95d9882-251d-470a-a062-fa1922dfa9a8': 'buttons',
+		'e95d127b-251d-470a-a062-fa1922dfa9a8': 'IO pins',
+		'e95dd91d-251d-470a-a062-fa1922dfa9a8': 'LED',
+		'e95d6100-251d-470a-a062-fa1922dfa9a8': 'thermometer',
+	};  
        
     class uBit {
 
@@ -481,6 +490,7 @@ var $builtinmodule = function(name)
             //self.statusMessages.push("Getting characteristics...");	
             let queue = Promise.resolve();
             services.forEach(service => {
+              self.statusMessages.push("Detected the " + SRV_LOOKUP[service.uuid] + ".");	
               queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
                 //self.statusMessages.push("Service retrieved:" + service.uuid + ":" + BLE_LOOKUP[service.uuid]);	
                 console.log('> Service: ' + service.uuid);

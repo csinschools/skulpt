@@ -39,11 +39,22 @@ class Style:
 def say(text, voice = 0):
     csinscTools.saySomething(text, voice)
     
-#def listenForSeconds(t):
+# overloaded on type:
+# if string, act like input()
+# if not-string, listen for 't' seconds
 def listen(t):
-    csinscTools.startListen()
-    sleep(t)
-    response = csinscTools.stopListen()
+    response = None
+    if isinstance(t, str):
+        print(t, end= "")
+        csinscTools.startListen()
+        while csinscTools.isListening():
+            continue
+        response = csinscTools.stopListen()
+        print(response)        
+    else:            
+        csinscTools.startListen()
+        sleep(t)
+        response = csinscTools.stopListen()
     return response
     
 def write(text):
@@ -96,8 +107,8 @@ def playSound(url):
 def playFreeSoundOrg(id):
     csinscTools.playFreeSoundOrg(id)
 
-def printImage(url):
-    addImage(url, None, None)
+def printImage(url, width = None, height = None):
+    addImage(url, width, height)
     # block until loaded
     while not imageLoaded:
         continue

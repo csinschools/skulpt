@@ -1,31 +1,46 @@
 import microBit
-from time import sleep
+from time import sleep, time
 from csinsc import Colour
 
 
 class Microbit:
-    def __init__(self, blockUntilConnect = True, showProgress = True):
+    def __init__(self, blockUntilConnect = True, showProgress = True, timeout = 20):
         self.uBit = microBit.Microbit()
-        print("Trying to connect...")
+        print("Connecting...please wait")
+        success = True
+        services = 0
+        now = time()
         if blockUntilConnect:
             while not self.uBit.isConnected():
-                if showProgress:                               #<<<< uncomment this to add in details about connection
-                    msg = self.uBit.dequeueStatusMessage()
-                    if len(msg) > 0:
-                        if msg[:5].lower() == "error":
-                            print(Colour.red + msg + Colour.reset)
-                        else:
+                msg = self.uBit.dequeueStatusMessage()
+                if len(msg) > 0:
+                    if msg[:5].lower() == "error":
+                        print(Colour.red + msg + Colour.reset)
+                        success = False
+                    else:
+                        if showProgress: 
                             print(msg)
-                continue
+                        services += 1
+            while services < 4 and success != False:
+                # timeout
+                if time() - now > timeout:
+                    success = False
+                    print(Colour.red + "Connection has taken too long." + Colour.reset)
+                msg = self.uBit.dequeueStatusMessage()
+                if len(msg) > 0:
+                    if msg[:5].lower() == "error":
+                        print(Colour.red + msg + Colour.reset)   
+                        success = False
+                    else:
+                        if showProgress:
+                            print(msg)
+                        services += 1                
             self.name = self.uBit.getName()
-        if showProgress:
-            print("Buttons wired up.")
-            print("Magnetometer has detected magnetic field.")
-            print("Accelerometer is ready to go.")
-            print("Thermometer thermometering.")
-            print("Successfully connected")
-            print("Houston, I'm ready to run code.")
-            print("- - - - - - - - - - - - - - - - - - - - - - - - -")
+        if success:
+            print(Colour.green + "Houston, I'm ready to run code on " + Colour.reset + self.name)
+            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        else:
+            print(Colour.blue + "There was a problem connecting to the microbit, please try again." + Colour.reset)
     
     def getName(self):
         return self.uBit.getName()
