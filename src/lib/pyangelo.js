@@ -84,14 +84,24 @@ var $builtinmodule = function(name)
         ctx.lineWidth = args.lineWidth;
         ctx.strokeStyle = args.strokeStyle;
         ctx.beginPath();
-        ctx.rect(args.x, args.y, args.width, _convY(args.height));
+        ctx.rect(args.x, _convY(args.y), args.width, -args.height);
         ctx.stroke();        
     }
+
+    function _drawLine(args)
+    {
+        ctx.lineWidth = args.lineWidth;
+        ctx.strokeStyle = args.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(args.x1, _convY(args.y1))
+        ctx.lineTo(args.x2, _convY(args.y2))
+        ctx.stroke();        
+    }    
     
     function _fillRect(args)
     {
         ctx.fillStyle = args.fillStyle;
-        ctx.fillRect(args.x, args.y, args.width, _convY(args.height));
+        ctx.fillRect(args.x, _convY(args.y), args.width, -args.height);
     }
     
     function _keyUpListener(e)
@@ -137,7 +147,7 @@ var $builtinmodule = function(name)
         _commands = [];
     });
     
-    function getColour(color, defaultCol)
+    function getColour(color, defaultCol, b, a)
     {
         var rgba;
         
@@ -158,7 +168,7 @@ var $builtinmodule = function(name)
             rgba = color;
         }
         else {
-            rgba = "rgba(" + color + "," + g + "," + b + "," + a + ")";
+            rgba = "rgba(" + color + "," + defaultCol + "," + b + "," + a + ")";
         }            
         return rgba;
     }
@@ -216,6 +226,29 @@ var $builtinmodule = function(name)
         
         return new Sk.builtin.none;        
     });
+
+    mod.drawLine = new Sk.builtin.func((x1, y1, x2, y2, lineWidth, color, g , b, a) => {
+        args = {};
+                
+        if (typeof(lineWidth) === 'undefined')
+        {
+            args.lineWidth = "1";
+        }
+        else
+        {
+            args.lineWidth = lineWidth;
+        }
+        args.strokeStyle = getColour(color, g, b, a);
+        
+        args.x1 = x1;
+        args.y1 = y1;
+        args.x2 = x2;
+        args.y2 = y2;
+        
+        _commands.push([_drawLine, args]);
+
+        return new Sk.builtin.none;
+    });        
     
     mod.drawRect = new Sk.builtin.func((x, y, width, height, lineWidth, color, g , b, a) => {
         args = {};
