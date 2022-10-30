@@ -9,6 +9,7 @@ var $builtinmodule = function(name)
     var MAGNETO_DATA = 'e95dfb11-251d-470a-a062-fa1922dfa9a8'
     var MAGNETO_PERIOD = 'e95d386c-251d-470a-a062-fa1922dfa9a8'
     var MAGNETO_BEARING = 'e95d9715-251d-470a-a062-fa1922dfa9a8'
+    var MAGNETO_CALIBRATE = 'e95db358-251d-470a-a062-fa1922dfa9a8'
     var BTN_SRV = 'e95d9882-251d-470a-a062-fa1922dfa9a8'
     var BTN_A_STATE = 'e95dda90-251d-470a-a062-fa1922dfa9a8'
     var BTN_B_STATE = 'e95dda91-251d-470a-a062-fa1922dfa9a8'
@@ -24,6 +25,7 @@ var $builtinmodule = function(name)
     var TEMP_SRV = 'e95d6100-251d-470a-a062-fa1922dfa9a8'
     var TEMP_DATA = 'e95d9250-251d-470a-a062-fa1922dfa9a8'
     var TEMP_PERIOD = 'e95d1b25-251d-470a-a062-fa1922dfa9a8'
+    
 	
 	var BLE_LOOKUP = {
 		'e95d0753-251d-470a-a062-fa1922dfa9a8': 'ACCEL_SRV',
@@ -33,6 +35,7 @@ var $builtinmodule = function(name)
 		'e95dfb11-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_DATA',
 		'e95d386c-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_PERIOD',
 		'e95d9715-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_BEARING',
+    'e95db358-251d-470a-a062-fa1922dfa9a8': 'MAGNETO_CALIBRATE',
 		'e95d9882-251d-470a-a062-fa1922dfa9a8': 'BTN_SRV',
 		'e95dda90-251d-470a-a062-fa1922dfa9a8': 'BTN_A_STATE',
 		'e95dda91-251d-470a-a062-fa1922dfa9a8': 'BTN_B_STATE',
@@ -91,6 +94,9 @@ var $builtinmodule = function(name)
         this.onDisconnectCallback=function(){};
 
         this.onBLENotifyCallback=function(){};
+
+        this.controller = null;
+        this.isCalibrating = false;
 		
         this.characteristic = {
           IO_PIN_DATA: {},
@@ -100,6 +106,7 @@ var $builtinmodule = function(name)
           LED_STATE: {},
           LED_TEXT: {},
           LED_SCROLL: {},
+          MAGNETO_CALIBRATE: {},
         }
 
         this.ledMatrix = [
@@ -165,6 +172,21 @@ var $builtinmodule = function(name)
         }        
       }
 
+      runCalibration() {
+        if(this.connected){
+            this.isCalibrating = true;
+            var buffer = new Uint8Array(1);
+            buffer[0] = 0x01;          
+            this.characteristic.MAGNETO_CALIBRATE.writeValue(buffer)          
+            .then(_ => {
+            })
+            .catch(error => {
+              console.log("Error in calibration: " + error);
+              this.controller.statusMessages.push("Error in calibrating the magnetometer:" + error);	
+            });
+        }          
+      }
+
       readPin(pin) {
 
       }
@@ -198,9 +220,10 @@ var $builtinmodule = function(name)
       }
 
       writeMatrixTextSpeed(speed){
-        var buffer= new Uint8Array(speed);
+        var buffer= new Uint8Array(1);
+        buffer[0] = speed;
         if(this.connected){
-          this.characteristic.LED_TEXT.writeValue(buffer)
+          this.characteristic.LED_SCROLL.writeValue(buffer)
           .then(_ => {})
           .catch(error => {
             console.log(error);
@@ -294,6 +317,17 @@ var $builtinmodule = function(name)
           // console.log("TEMP_DATA", event.target.value.getInt8());
           this.temperature = event.target.value.getInt8();
         }
+
+        if (event.target.uuid == MAGNETO_CALIBRATE) {
+          let result = event.target.value.getInt8();
+          this.isCalibrating = false;
+          if (result != 0) {
+            this.controller.statusMessages.push("Error in calibrating the magnetometer.");	
+          }
+          else {
+            this.controller.statusMessages.push("Calibration successful!");	
+          }
+        }
         
         this.onBLENotifyCallback();
       }
@@ -379,6 +413,7 @@ var $builtinmodule = function(name)
         options.optionalServices = [ACCEL_SRV, MAGNETO_SRV, BTN_SRV, IO_PIN_SRV, LED_SRV, TEMP_SRV];
 
         self.microBit = new uBit();
+        self.microBit.controller = self;
 					
         self.writableHandle = null;
         self.interval = null;
@@ -530,6 +565,10 @@ var $builtinmodule = function(name)
                       self.microBit.characteristic.LED_SCROLL = characteristic;
                       break;
 
+                    case MAGNETO_CALIBRATE:
+                      self.microBit.characteristic.MAGNETO_CALIBRATE = characteristic;
+                      break;
+
                     default:
                   }
 
@@ -551,42 +590,44 @@ var $builtinmodule = function(name)
 
         return;
       });
+
+      $loc.isCalibrating = new Sk.builtin.func((self) => {
+        return new Sk.builtin.bool(self.microBit.isCalibrating);
+      });
+
+      $loc.runCalibration = new Sk.builtin.func((self) => {
+        self.microBit.runCalibration();
+        return new Sk.builtin.none;  
+      });
 		
-      //function updatePixel(x,y,value){
       $loc.updatePixel = new Sk.builtin.func((self, x, y, value) => {
-        //console.log(self.microBit.ledMatrix);
         if (Sk.ffi.remapToJs(value) == true) {
           self.microBit.ledMatrix[x][y]='1';
         }
         else if (Sk.ffi.remapToJs(value) == false) {
           self.microBit.ledMatrix[x][y]='0';
         }
-        //console.log(self.microBit.ledMatrix);
         self.microBit.writeMatrixIcon(self.microBit.ledMatrix);	 
       });
 
-      $loc.getName = new Sk.builtin.func( () => {
+      $loc.getName = new Sk.builtin.func( (self) => {
         return new Sk.builtin.str(self.device.name);
       });
-      
-      $loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
-        msg = "";
-        if (self.statusMessages.length != 0) {
-          msg = self.statusMessages[0];
-          self.statusMessages.shift();
-        }
-        return new Sk.builtin.str(msg);  
-      });
-      
-      $loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
-        msg = "";
-        if (self.statusMessages.length != 0) {
-          msg = self.statusMessages[0];
-          self.statusMessages.shift();
-        }
-        return new Sk.builtin.str(msg);  
-      });
 
+      $loc.clearStatusMessage = new Sk.builtin.func((self) => {
+        self.statusMessages = [];
+        return new Sk.builtin.none; 
+      });      
+      
+      $loc.dequeueStatusMessage = new Sk.builtin.func((self) => {
+        msg = "";
+        if (self.statusMessages.length != 0) {
+          msg = self.statusMessages[0];
+          self.statusMessages.shift();
+        }
+        return new Sk.builtin.str(msg);  
+      });
+      
       $loc.setLEDs = new Sk.builtin.func((self, matrix) => {
         self.microBit.ledMatrix = Sk.ffi.remapToJs(matrix)
         self.microBit.writeMatrixIcon(self.microBit.ledMatrix);
@@ -618,6 +659,11 @@ var $builtinmodule = function(name)
         
         return new Sk.builtin.none;  
       });
+
+      $loc.setScrollSpeed = new Sk.builtin.func((self, speed) => {
+        self.microBit.writeMatrixTextSpeed(speed);
+        return new Sk.builtin.none;  
+      });    		
     
       $loc.setText = new Sk.builtin.func((self, scrollText) => {
         var text = "" + scrollText;

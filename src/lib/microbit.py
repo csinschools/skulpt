@@ -2,10 +2,10 @@ import microBit
 from time import sleep, time
 from csinsc import Colour
 
-
 class Microbit:
     def __init__(self, blockUntilConnect = True, showProgress = True, timeout = 20):
         self.uBit = microBit.Microbit()
+        self.showProgress = showProgress
         print("Connecting...please wait")
         success = True
         services = 0
@@ -18,10 +18,10 @@ class Microbit:
                         print(Colour.red + msg + Colour.reset)
                         success = False
                     else:
-                        if showProgress: 
+                        if self.showProgress: 
                             print(msg)
                         services += 1
-            while services < 4 and success != False:
+            while services < 5 and success != False:
                 # timeout
                 if time() - now > timeout:
                     success = False
@@ -32,7 +32,7 @@ class Microbit:
                         print(Colour.red + msg + Colour.reset)   
                         success = False
                     else:
-                        if showProgress:
+                        if self.showProgress:
                             print(msg)
                         services += 1                
             self.name = self.uBit.getName()
@@ -44,6 +44,10 @@ class Microbit:
     
     def getName(self):
         return self.uBit.getName()
+
+    # sets the scroll speed: 0 = fastest, 255 = slowest
+    def setScrollSpeed(self, speed):
+        self.uBit.setScrollSpeed(speed)
 
     def setText(self, text):                    # scrolls the text across the screen
         self.uBit.setText(text)
@@ -116,6 +120,22 @@ class Microbit:
     def getAccelerometerZ(self):                # returns acceleration in Z 
         return self.uBit.getAccelerometerZ() 
 
+    def runCalibration(self):
+        self.uBit.clearStatusMessage()
+        self.uBit.runCalibration()
+        result = True
+        while self.uBit.isCalibrating():
+            msg = self.uBit.dequeueStatusMessage()
+            if len(msg) > 0:
+                if msg[:5].lower() == "error":
+                    print(Colour.red + msg + Colour.reset)
+                    result = False
+                else:
+                    if self.showProgress: 
+                        print(msg)
+        return result
+
+
     def startRecordData(self, interval):
         self.uBit.recordData(interval * 1000)
         while not self.uBit.isRecording():
@@ -128,7 +148,6 @@ class Microbit:
 
     def setLEDs(self, matrix):
         self.uBit.setLEDs(matrix)
-
 
     def setLED(self, col, row, value):          # True: turns LED on, False: turns LED off
         self.uBit.updatePixel(4 - row, col, value)
