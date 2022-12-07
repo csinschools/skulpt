@@ -103,9 +103,13 @@ def sendsms(number, text):
 
 def playSound(url):
     csinscTools.playSound(url)
+    while csinscTools.isLoadingSound():
+        continue        
 
 def playFreeSoundOrg(id):
     csinscTools.playFreeSoundOrg(id)
+    while csinscTools.isLoadingSound():
+        continue    
 
 def printImage(url, width = None, height = None):
     addImage(url, width, height)

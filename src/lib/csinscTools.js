@@ -187,12 +187,22 @@ var $builtinmodule = function(name)
       return text  
     });
 
+    mod.isLoadingSound = new Sk.builtin.func(() => {   
+      return new Sk.builtin.bool(mod.loadingSound);
+    });
+
     mod.playSound = new Sk.builtin.func((url) => {
       var audioElement = new Audio(url);
+      mod.loadingSound = true;
+      audioElement.oncanplaythrough = (event) => {
+        mod.loadingSound = false;
+      };             
       audioElement.play();      
     });
 
     mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
+      mod.loadingSound = true;
+
       var xhr = new XMLHttpRequest();      
       const requestURL =  "https://freesound.org/apiv2/sounds/" + id + "/?fields=previews&format=json&token=Vzf4dkU29E5ltPX1sfi2aqCkzG1aKgbITklKHROh";
       console.log(requestURL);
@@ -213,11 +223,14 @@ var $builtinmodule = function(name)
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
           if (xhr.responseText.length == 0) {
           }
-          else {
-            
+          else {            
             const response = JSON.parse(xhr.responseText);
             const url = response["previews"]["preview-hq-ogg"];
             var audioElement = new Audio(url);
+            
+            audioElement.oncanplaythrough = (event) => {
+              mod.loadingSound = false;
+            };            
             audioElement.play();              
           }
         }
