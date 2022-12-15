@@ -101,15 +101,29 @@ def listenWithText(text = ""):
 def sendsms(number, text):
     csinscTools.sendsms(number, text)    
 
+#### sound functions
+
+# volume is a number between 0 and 100
+# divide by 100 before js call
+def setVolume(volume):
+    csinscTools.setVolume(volume / 100)
+
 def playSound(url):
+    showSpinner()
     csinscTools.playSound(url)
     while csinscTools.isLoadingSound():
-        continue        
+        continue 
+    hideSpinner()
 
 def playFreeSoundOrg(id):
+    showSpinner()
     csinscTools.playFreeSoundOrg(id)
     while csinscTools.isLoadingSound():
-        continue    
+        continue 
+    hideSpinner()   
+
+def stopSound():
+    csinscTools.stopSound()
 
 def printImage(url, width = None, height = None):
     addImage(url, width, height)

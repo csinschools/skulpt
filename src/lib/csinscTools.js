@@ -191,17 +191,47 @@ var $builtinmodule = function(name)
       return new Sk.builtin.bool(mod.loadingSound);
     });
 
+    /////////////////////////////////// audio functions ///////////////////////////
+    // only 1 audioElement at a time
+
+    mod.audioElement = null;
+
+    mod.setVolume = new Sk.builtin.func((volume) => {
+      if (mod.audioElement !== null) {
+        mod.audioElement.volume = volume;
+      }
+    });
+
+    function stopSound() {
+      if (mod.audioElement !== null) {
+        document.body.removeChild(mod.audioElement);
+        mod.audioElement.pause();
+        mod.audioElement.currentTime = 0;
+        mod.audioElement.src ="";
+        mod.audioElement = null;        
+      }
+    }
+
+    mod.stopSound = new Sk.builtin.func(() => {
+      stopSound();
+    });
+    
     mod.playSound = new Sk.builtin.func((url) => {
-      var audioElement = new Audio(url);
+      stopSound();
+      mod.audioElement = new Audio(url);
       mod.loadingSound = true;
-      audioElement.oncanplaythrough = (event) => {
+      mod.audioElement.oncanplaythrough = (event) => {
         mod.loadingSound = false;
-      };             
-      audioElement.play();      
+        mod.audioElement.play();  
+        document.body.appendChild(mod.audioElement);
+      };                      
     });
 
     mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
       mod.loadingSound = true;
+
+      // stop current sound
+      stopSound();   
 
       var xhr = new XMLHttpRequest();      
       const requestURL =  "https://freesound.org/apiv2/sounds/" + id + "/?fields=previews&format=json&token=Vzf4dkU29E5ltPX1sfi2aqCkzG1aKgbITklKHROh";
@@ -226,12 +256,14 @@ var $builtinmodule = function(name)
           else {            
             const response = JSON.parse(xhr.responseText);
             const url = response["previews"]["preview-hq-ogg"];
-            var audioElement = new Audio(url);
+            mod.audioElement = new Audio(url);
             
-            audioElement.oncanplaythrough = (event) => {
+            mod.audioElement.oncanplaythrough = (event) => {
               mod.loadingSound = false;
+              mod.audioElement.play();              
+              document.body.appendChild(mod.audioElement);
             };            
-            audioElement.play();              
+            
           }
         }
       } 
