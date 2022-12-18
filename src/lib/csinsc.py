@@ -1,6 +1,7 @@
 import csinscTools
 import re
 from time import sleep
+from random import choice
 
 class Colour:
     reset = "\u001b[ 0;2;0;0;0 m"
@@ -102,10 +103,13 @@ def sendsms(number, text):
     csinscTools.sendsms(number, text)    
 
 #### sound functions
+master_volume = 50
 
 # volume is a number between 0 and 100
 # divide by 100 before js call
 def setVolume(volume):
+    global master_volume
+    master_volume = volume
     csinscTools.setVolume(volume / 100)
 
 def playSound(url):
@@ -113,6 +117,7 @@ def playSound(url):
     csinscTools.playSound(url)
     while csinscTools.isLoadingSound():
         continue 
+    setVolume(master_volume)
     hideSpinner()
 
 def playFreeSoundOrg(id):
@@ -120,6 +125,7 @@ def playFreeSoundOrg(id):
     csinscTools.playFreeSoundOrg(id)
     while csinscTools.isLoadingSound():
         continue 
+    setVolume(master_volume)
     hideSpinner()   
 
 def stopSound():
@@ -130,3 +136,8 @@ def printImage(url, width = None, height = None):
     # block until loaded
     while not imageLoaded:
         continue
+
+
+#### probability functions
+def choose(*options):
+    return choice(options)
