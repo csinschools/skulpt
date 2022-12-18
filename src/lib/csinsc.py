@@ -64,6 +64,7 @@ def write(text):
 def slowPrint(text, delay = 0.1, newline = True):
     escPattern = r"\[ (\d+);2;(\d+);(\d+);(\d+) m"         
     i = 0
+    colour = ""
     while i < len(text):
         if text[i] == "\u001b":
             m = re.search(escPattern, text[i + 1:])
@@ -76,10 +77,10 @@ def slowPrint(text, delay = 0.1, newline = True):
                 # no pause if there's a style change
                 continue
             else:
-                print(text[i], end = "")            
+                print(colour + text[i], end = "")            
                 i += 1
         else:
-            print(text[i], end = "")
+            print(colour + text[i], end = "")
             i += 1
         sleep(delay)
     if newline:
@@ -141,3 +142,12 @@ def printImage(url, width = None, height = None):
 #### probability functions
 def choose(*options):
     return choice(options)
+
+
+#### helper prints without casting
+def printWithNumbers(*args):
+    print(*args, sep='')
+    
+def slowPrintWithNumbers(*args):
+    text = ''.join([str(arg) for arg in args])
+    slowPrint(text)
