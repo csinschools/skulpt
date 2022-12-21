@@ -61,6 +61,8 @@ def listen(t):
 def write(text):
     print(text, end = "")
     
+# TODO: issue with using args (numbers concatenation) and sep = '' and all the
+# other named args below (delay, newline etc.)
 def slowPrint(text, delay = 0.1, newline = True):
     escPattern = r"\[ (\d+);2;(\d+);(\d+);(\d+) m"         
     i = 0
@@ -147,7 +149,17 @@ def choose(*options):
 #### helper prints without casting
 def printWithNumbers(*args):
     print(*args, sep='')
-    
+
 def slowPrintWithNumbers(*args):
     text = ''.join([str(arg) for arg in args])
     slowPrint(text)
+
+
+#### openAI API
+def getOpenAICompletion(prompt):
+    showSpinner()
+    csinscTools.getOpenAICompletion(prompt)
+    while csinscTools.openAIWaiting:
+        continue 
+    hideSpinner()  
+    return csinscTools.openAIResponse
