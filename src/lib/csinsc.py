@@ -162,4 +162,12 @@ def getOpenAICompletion(prompt):
     while csinscTools.openAIWaiting:
         continue 
     hideSpinner()  
-    return csinscTools.openAIResponse
+    return str(csinscTools.openAIResponse)
+
+def getOpenAIImage(prompt):
+    showSpinner()
+    csinscTools.getOpenAIImage(prompt)
+    while csinscTools.openAIWaiting:
+        continue 
+    hideSpinner()  
+    return str(csinscTools.openAIResponse)

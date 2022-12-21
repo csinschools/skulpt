@@ -309,7 +309,44 @@ var $builtinmodule = function(name)
       
       xhr.send();    
     });    
+
+    mod.getOpenAIImage = new Sk.builtin.func((prompt) => {
+      mod.openAIWaiting = true;
+      mod.openAIResponse = "";
+
+      var xhr = new XMLHttpRequest();      
+      const requestURL =  "https://codestore-348206.ts.r.appspot.com/openai/image?prompt=" + prompt;
+      console.log(requestURL);
+      xhr.open("GET", requestURL, true);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.timeout = 10000; // time in milliseconds
+  
+      xhr.ontimeout = (e) => {
+        console.log("Timeout");
+        mod.openAIWaiting = false;
+      };    
     
+      xhr.onerror = function() {
+        console.log("Error");
+        mod.openAIWaiting = false;
+      }
+      
+      xhr.onreadystatechange = function() {
+        console.log("Response:" + xhr.responseText);
+        
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          
+          if (xhr.responseText.length > 0) {
+            mod.openAIResponse = xhr.responseText;                       
+          }
+          mod.openAIWaiting = false;
+        }
+      } 
+      
+      xhr.send();    
+    });    
+    
+
     return mod;
 }
 
