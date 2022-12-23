@@ -37,7 +37,10 @@ class Style:
     italics = "\u001b[ 3;2;0;0;0 m"
     underline = "\u001b[ 4;2;0;0;0 m"
 
-def say(text, voice = 0):
+# sep='' default argument required for the + concatenation training wheel
+# named argument now required for voice
+def say(*args, voice = 0, sep = ''):
+    text = ''.join([str(arg) for arg in args])
     csinscTools.saySomething(text, voice)
     
 # overloaded on type:
@@ -61,9 +64,10 @@ def listen(t):
 def write(text):
     print(text, end = "")
     
-# TODO: issue with using args (numbers concatenation) and sep = '' and all the
-# other named args below (delay, newline etc.)
-def slowPrint(text, delay = 0.1, newline = True):
+# as a result of + replacement in training wheels
+# slowPrint() will require named arguments for delay and newLine
+def slowPrint(*args, delay = 0.1, newline = True, sep = ''):
+    text = ''.join([str(arg) for arg in args])
     escPattern = r"\[ (\d+);2;(\d+);(\d+);(\d+) m"         
     i = 0
     colour = ""
@@ -88,8 +92,8 @@ def slowPrint(text, delay = 0.1, newline = True):
     if newline:
         print()
     
-def slowWrite(text, delay = 0.1):
-    slowPrint(text, delay, newline = False)    
+def slowWrite(args, delay = 0.1):
+    slowPrint(args, delay, newline = False)    
 
 
 #def listen(text = ""):
@@ -154,6 +158,12 @@ def slowPrintWithNumbers(*args):
     text = ''.join([str(arg) for arg in args])
     slowPrint(text)
 
+### helper inputs without casting
+def int_input(*args):
+    return int(input(*args))
+
+def float_input(*args):
+    return float(input(*args))
 
 #### openAI API
 def getOpenAICompletion(prompt):
