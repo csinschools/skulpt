@@ -159,11 +159,50 @@ def slowPrintWithNumbers(*args):
     slowPrint(text)
 
 ### helper inputs without casting
-def int_input(*args):
-    return int(input(*args))
+# scaffold to input() with casting later
+def intInput(*args):
+    result = None
+    while result is None:
+        try:
+            result = int(input(*args))
+        except ValueError as ve:
+            print("Incorrect format: expected an integer. Please try again.")
+    return result
 
-def float_input(*args):
-    return float(input(*args))
+def floatInput(*args):
+    result = None
+    while result is None:
+        try:
+            result = float(input(*args))
+        except ValueError as ve:
+            print("Incorrect format: expected a float. Please try again.")
+    return result    
+
+# same as floatInput but different error message
+def numInput(*args):
+    result = None
+    while result is None:
+        try:
+            result = float(input(*args))
+        except ValueError as ve:
+            print("Incorrect format: expected a number. Please try again.")
+    return result    
+
+# just an alias for input(), but consistent with intInput() and floatInput() above
+def strInput(*args):
+    return input(*args)
+
+# aliases for above
+def input_integer(*args):
+    return intInput(*args)
+def input_float(*args):
+    return floatInput(*args)
+def input_number(*args):
+    return numInput(*args)
+def input_num(*args):
+    return numInput(*args)
+def input_string(*args):
+    return input(*args)
 
 #### openAI API
 def getOpenAICompletion(prompt):
