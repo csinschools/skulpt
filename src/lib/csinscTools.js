@@ -216,9 +216,10 @@ var $builtinmodule = function(name)
       stopSound();
     });
     
-    mod.playSound = new Sk.builtin.func((url) => {
+    mod.playSound = new Sk.builtin.func((url, loop) => {
       stopSound();
       mod.audioElement = new Audio(url);
+      mod.audioElement.loop = loop;
       mod.loadingSound = true;
       mod.audioElement.oncanplaythrough = (event) => {
         mod.loadingSound = false;

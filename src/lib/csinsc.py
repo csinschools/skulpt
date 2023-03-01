@@ -119,9 +119,9 @@ def setVolume(volume):
     master_volume = volume
     csinscTools.setVolume(volume / 100)
 
-def playSound(url):
+def playSound(url, loop = False):
     showSpinner()
-    csinscTools.playSound(url)
+    csinscTools.playSound(url, loop)
     while csinscTools.isLoadingSound():
         continue 
     setVolume(master_volume)
