@@ -121,18 +121,20 @@ var $builtinmodule = function(name)
       return new Sk.builtin.none;       
     });
 
-    mod.startListen = new Sk.builtin.func(() => {
-      const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
-      const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+    const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
 
-      mod.recognition = new SpeechRecognition();
+      
+
+    mod.startListen = new Sk.builtin.func(() => {
+      mod.recognition = new SpeechRecognition();  
 
       mod.listening = true;
       mod.final_transcript = "";
       mod.interim_transcript = "";
       mod.recognition.continuous = false;
       mod.recognition.lang = 'en-AU';
-      mod.recognition.interimResults = true;
+      mod.recognition.interimResults = false;
       mod.recognition.maxAlternatives = 1;
 
       mod.recognition.onresult = function(event) {
@@ -140,20 +142,18 @@ var $builtinmodule = function(name)
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             mod.final_transcript += event.results[i][0].transcript;
+            console.log("Final transcript:" + mod.final_transcript);
+            mod.listening = false;
           } else {
             mod.interim_transcript += event.results[i][0].transcript;
           }
         }
       }
 
-      mod.recognition.onspeechend = function() {
-        mod.listening = false;
+      mod.recognition.onspeechend = function() {        
+        mod.recognition.stop();
       } 
       
-      mod.recognition.onsoundend = function() {
-        mod.listening = false;
-      }       
-
       mod.recognition.onnomatch = function(event) {
         console.log("I didn\'t recognize that, sorry.");
       }
@@ -186,9 +186,9 @@ var $builtinmodule = function(name)
       } else{
         text = new Sk.builtin.str(mod.interim_transcript);
       }
-      mod.recognition.stop();
-      mod.listening = false;
-      return text  
+
+      console.log("stopListen() transcript:" + text);
+      return text;      
     });
 
     mod.isLoadingSound = new Sk.builtin.func(() => {   

@@ -51,7 +51,7 @@ def say(text, voice = 0):
 def listen(t):
     response = None
     if isinstance(t, str):
-        print(t, end= "")
+        print(t, end= "", flush=True)
         csinscTools.startListen()
         while csinscTools.isListening():
             continue
