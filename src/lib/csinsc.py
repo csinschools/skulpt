@@ -39,8 +39,10 @@ class Style:
 
 # sep='' default argument required for the + concatenation training wheel
 # named argument now required for voice
-def say(*args, voice = 0, sep = ''):
-    text = ''.join([str(arg) for arg in args])
+# def say(*args, voice = 0, sep = ''):
+# removing for 2023 intermediate course, back to positional voice arg 
+def say(text, voice = 0):    
+    #text = ''.join([str(arg) for arg in args])
     csinscTools.saySomething(text, voice)
     
 # overloaded on type:

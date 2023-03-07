@@ -68,6 +68,10 @@ var $builtinmodule = function(name)
     if (speechSynthesis.onvoiceschanged !== undefined) {
       speechSynthesis.onvoiceschanged = populateVoiceList;
     }
+
+    mod.say = new Sk.builtin.func((text, voice) => { 
+      mod.saySomething(text, voice);
+    })
     
     mod.saySomething = new Sk.builtin.func((text, voice) => {    
       const badWords = [
