@@ -41,9 +41,19 @@ class Style:
 # named argument now required for voice
 # def say(*args, voice = 0, sep = ''):
 # removing for 2023 intermediate course, back to positional voice arg 
+firstUtterance = True
 def say(text, voice = 0):    
+    global firstUtterance
     #text = ''.join([str(arg) for arg in args])
+    # add a delay for the first utterance to allow speech engine to lazily load
+    # TODO: not working!
+    if firstUtterance:
+        text = ", !, !, ! " + text
+        firstUtterance = False
     csinscTools.saySomething(text, voice)
+    # block until finished speaking
+    while csinscTools.isSpeaking():
+        continue    
     
 # overloaded on type:
 # if string, act like input()

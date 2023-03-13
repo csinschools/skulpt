@@ -57,16 +57,16 @@ var $builtinmodule = function(name)
         xhr.send(data);        
     });
     
-    var synth = window.speechSynthesis;
-    var voices = [];
+    mod.synth = window.speechSynthesis;
+    mod.voices = [];
     
     function populateVoiceList() {
-      voices = synth.getVoices();
+      mod.voices = mod.synth.getVoices();
     }    
     
     populateVoiceList();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = populateVoiceList;
+    if (mod.synth.onvoiceschanged !== undefined) {
+      mod.synth.onvoiceschanged = populateVoiceList;
     }
 
     mod.say = new Sk.builtin.func((text, voice) => { 
@@ -110,16 +110,20 @@ var $builtinmodule = function(name)
       }  
     
       var utterThis = new SpeechSynthesisUtterance(text);
-      if (voice >= voices.length) {
-          voice = 0;
+      if (voice >= mod.voices.length) {
+          voice %= mod.voices.length;
         } 
-      utterThis.voice = voices[voice];
+      utterThis.voice = mod.voices[voice];
       utterThis.pitch = 1;
       utterThis.rate = 1;
-      synth.speak(utterThis);        
+      mod.synth.speak(utterThis);        
       
       return new Sk.builtin.none;       
     });
+
+    mod.isSpeaking = new Sk.builtin.func(() => {   
+      return new Sk.builtin.bool(mod.synth.speaking);
+    });    
 
     const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
     const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
