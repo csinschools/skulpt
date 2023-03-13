@@ -48,7 +48,8 @@ def say(text, voice = 0):
     # add a delay for the first utterance to allow speech engine to lazily load
     # TODO: not working!
     if firstUtterance:
-        text = ", !, !, ! " + text
+        csinscTools.saySomething("", voice)    
+        sleep(1)
         firstUtterance = False
     csinscTools.saySomething(text, voice)
     # block until finished speaking
