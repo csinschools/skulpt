@@ -169,6 +169,7 @@ var $builtinmodule = function(name)
           .then(_ => {})
           .catch(error => {
             console.log(error);
+            throw error;
           });
         }        
       }
@@ -184,6 +185,7 @@ var $builtinmodule = function(name)
             .catch(error => {
               console.log("Error in calibration: " + error);
               this.controller.statusMessages.push("Error in calibrating the magnetometer:" + error);	
+              throw error;
             });
         }          
       }
@@ -219,8 +221,14 @@ var $builtinmodule = function(name)
             this.writeInProgress = false;
           })
           .catch(error => {
-            console.log(error);
+            console.log("Error in writeMatrixIcon:" + error);
+            // OMG: most evil coupling between UI and offline library... sigh!
+            
+            logError("There was an error attempting to write to the LED screen: " + error);    
+            stopEditor();
+
             this.writeInProgress = false;
+            throw error;
           });
         }
       }
@@ -237,6 +245,10 @@ var $builtinmodule = function(name)
           .catch(error => {
             this.writeInProgress = false;
             console.log(error);
+            logError("There was an error attempting to set the text speed: " + error);    
+            stopEditor();
+
+            throw error;
           });
         }
       }
@@ -253,6 +265,11 @@ var $builtinmodule = function(name)
           .catch(error => {
             this.writeInProgress = false;
             console.log(error);
+
+            logError("There was an error attempting to write text to the LED screen: " + error);    
+            stopEditor();
+
+            throw error;
           });
         }
       }
@@ -648,7 +665,8 @@ var $builtinmodule = function(name)
       });
       
       $loc.setLEDs = new Sk.builtin.func((self, matrix) => {
-        self.microBit.ledMatrix = Sk.ffi.remapToJs(matrix)
+        self.microBit.ledMatrix = Sk.ffi.remapToJs(matrix);
+
         self.microBit.writeMatrixIcon(self.microBit.ledMatrix);
         return new Sk.builtin.none;  
       });

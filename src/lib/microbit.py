@@ -49,14 +49,21 @@ class Microbit:
     def setScrollSpeed(self, speed):
         while self.uBit.isGATTWriting():
             continue            
-        self.uBit.setScrollSpeed(speed)
+        try:
+            self.uBit.setScrollSpeed(speed)
+        except:
+            raise Exception("Error encountered setting scroll speed")   
 
     def setText(self, text):                    # scrolls the text across the screen
         while self.uBit.isGATTWriting():
             continue            
         if len(text) > 20:
             raise Exception("Microbit text limit is 20 characters")
-        self.uBit.setText(text)
+        try:
+            self.uBit.setText(text)
+        except:
+            raise Exception("Error encountered writing text to Microbit LED screen")                
+            
 
     def print(self, text):                      # scrolls the text across the screen
         self.setText(text)
@@ -102,7 +109,7 @@ class Microbit:
             buttonAState = self.uBit.getButtonA()
             buttonBState = self.uBit.getButtonB()
 
-        sleep(0.5)
+        #sleep(0.5)
         return buttonAState, buttonBState
 
     def getTemperature(self):                   # returns integer of temp reading
@@ -150,8 +157,12 @@ class Microbit:
 
     def set(self, col, row, value):             # True: turns LED on, False: turns LED off
         while self.uBit.isGATTWriting():
-            continue        
-        self.uBit.updatePixel(4 - row, col, value)
+            continue    
+        try:
+            self.uBit.updatePixel(4 - row, col, value)
+        except:
+            raise Exception("Error encountered writing to Microbit LED screen")             
+        
         
 
     # setLEDs(1, 0, 0, 0, 0,
@@ -171,24 +182,37 @@ class Microbit:
         leds.append([str(x) for x in argv[10:15]])
         leds.append([str(x) for x in argv[15:20]])
         leds.append([str(x) for x in argv[20:25]])
-        self.uBit.setLEDs(leds)
+        try:
+            self.uBit.setLEDs(leds)
+        except:
+            raise Exception("Error encountered writing to Microbit LED screen") 
 
     def setLED(self, col, row, value):          # True: turns LED on, False: turns LED off
         while self.uBit.isGATTWriting():
             continue
-        self.uBit.updatePixel(4 - row, col, value)
+        try:
+            self.uBit.updatePixel(4 - row, col, value)
+        except:
+            raise Exception("Error encountered writing to Microbit LED screen")
         
 
     def clear(self):                            # Turns off LEDs
         while self.uBit.isGATTWriting():
             continue
-        self.uBit.clearLED()
+        try:
+            self.uBit.clearLED()
+        except:
+            raise Exception("Error encountered writing to Microbit LED screen")         
+        
         #sleep(0.05)
 
     def fill(self):                             # Turns on all LEDs
         while self.uBit.isGATTWriting():
-            continue        
-        self.uBit.fillLED()
+            continue       
+        try:
+            self.uBit.fillLED()
+        except:
+            raise Exception("Error encountered writing to Microbit LED screen")                  
         #sleep(0.05)
         
     def writePin(self, pin, value):
