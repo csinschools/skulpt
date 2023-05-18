@@ -47,13 +47,19 @@ class Microbit:
 
     # sets the scroll speed: 0 = fastest, 255 = slowest
     def setScrollSpeed(self, speed):
+        while self.uBit.isGATTWriting():
+            continue            
         self.uBit.setScrollSpeed(speed)
 
     def setText(self, text):                    # scrolls the text across the screen
+        while self.uBit.isGATTWriting():
+            continue            
+        if len(text) > 20:
+            raise Exception("Microbit text limit is 20 characters")
         self.uBit.setText(text)
 
     def print(self, text):                      # scrolls the text across the screen
-        self.uBit.setText(text)
+        self.setText(text)
 
     def isButtonAPressed(self):                 # returns whether button A was pressed (ie. released and now held)
         return self.uBit.isButtonAPressed()
@@ -143,23 +149,47 @@ class Microbit:
         return
 
     def set(self, col, row, value):             # True: turns LED on, False: turns LED off
+        while self.uBit.isGATTWriting():
+            continue        
         self.uBit.updatePixel(4 - row, col, value)
-        sleep(0.05)
+        
 
-    def setLEDs(self, matrix):
-        self.uBit.setLEDs(matrix)
+    # setLEDs(1, 0, 0, 0, 0,
+    #         0, 1, 0, 0, 0,
+    #         0, 0, 1, 0, 0,
+    #         0, 0, 0, 1, 0,
+    #         0, 0, 0, 0, 1)
+    def setLEDs(self, *argv):
+        while self.uBit.isGATTWriting():
+            continue        
+        if len(argv) < 25:
+            argv = list(argv)
+            argv += [0] * 25
+        leds = []
+        leds.append([str(x) for x in argv[:5]])
+        leds.append([str(x) for x in argv[5:10]])
+        leds.append([str(x) for x in argv[10:15]])
+        leds.append([str(x) for x in argv[15:20]])
+        leds.append([str(x) for x in argv[20:25]])
+        self.uBit.setLEDs(leds)
 
     def setLED(self, col, row, value):          # True: turns LED on, False: turns LED off
+        while self.uBit.isGATTWriting():
+            continue
         self.uBit.updatePixel(4 - row, col, value)
-        sleep(0.05)
+        
 
     def clear(self):                            # Turns off LEDs
+        while self.uBit.isGATTWriting():
+            continue
         self.uBit.clearLED()
-        sleep(0.05)
+        #sleep(0.05)
 
     def fill(self):                             # Turns on all LEDs
+        while self.uBit.isGATTWriting():
+            continue        
         self.uBit.fillLED()
-        sleep(0.05)
+        #sleep(0.05)
         
     def writePin(self, pin, value):
         self.uBit.writePin(pin, value)

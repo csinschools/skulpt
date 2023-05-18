@@ -133,30 +133,25 @@ def setVolume(volume):
     csinscTools.setVolume(volume / 100)
 
 def playSound(url, loop = False):
-    showSpinner()
     csinscTools.playSound(url, loop)
     while csinscTools.isLoadingSound():
         continue 
     setVolume(master_volume)
-    hideSpinner()
 
 def playFreeSoundOrg(id):
-    showSpinner()
     csinscTools.playFreeSoundOrg(id)
     while csinscTools.isLoadingSound():
         continue 
     setVolume(master_volume)
-    hideSpinner()   
 
 def stopSound():
     csinscTools.stopSound()
 
-def printImage(url, width = None, height = None):
-    addImage(url, width, height)
-    # block until loaded
-    while not imageLoaded:
-        continue
 
+def printImage(url, width = None, height = None):
+    csinscTools.addImage(url, width, height)
+    while csinscTools.isLoadingImage():
+        continue 
 
 #### probability functions
 def choose(*options):

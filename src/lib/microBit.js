@@ -77,6 +77,7 @@ var $builtinmodule = function(name)
           z: 0
         };
 
+        this.writeInProgress = false;
         this.magnetometer_bearing = 0;
         this.temperature = 0;
 
@@ -210,33 +211,47 @@ var $builtinmodule = function(name)
           ledMatrix[i]=parseInt(string,2)
         }
         if(this.connected){
+
+          this.writeInProgress = true;
+
           this.characteristic.LED_STATE.writeValue(ledMatrix)
           .then(_ => {
+            this.writeInProgress = false;
           })
           .catch(error => {
             console.log(error);
+            this.writeInProgress = false;
           });
         }
       }
 
-      writeMatrixTextSpeed(speed){
+      writeMatrixTextSpeed(speed) {
         var buffer= new Uint8Array(1);
         buffer[0] = speed;
-        if(this.connected){
+        if (this.connected) {
+          this.writeInProgress = true;
           this.characteristic.LED_SCROLL.writeValue(buffer)
-          .then(_ => {})
+          .then(_ => {
+            this.writeInProgress = false;
+          })
           .catch(error => {
+            this.writeInProgress = false;
             console.log(error);
           });
         }
       }
 
-      writeMatrixText(str){
+      writeMatrixText(str) {
         var buffer= new Uint8Array(toUTF8Array(str));
-        if(this.connected){
+        if (this.connected) {
+          this.writeInProgress = true;
           this.characteristic.LED_TEXT.writeValue(buffer)
-          .then(_ => {})
+          .then(_ => {
+            this.writeInProgress = false;
+
+          })
           .catch(error => {
+            this.writeInProgress = false;
             console.log(error);
           });
         }
@@ -590,6 +605,10 @@ var $builtinmodule = function(name)
 
         return;
       });
+
+      $loc.isGATTWriting = new Sk.builtin.func((self) => {
+        return new Sk.builtin.bool(self.microBit.writeInProgress);
+      }); 
 
       $loc.isCalibrating = new Sk.builtin.func((self) => {
         return new Sk.builtin.bool(self.microBit.isCalibrating);

@@ -195,14 +195,27 @@ var $builtinmodule = function(name)
       return text;      
     });
 
-    mod.isLoadingSound = new Sk.builtin.func(() => {   
-      return new Sk.builtin.bool(mod.loadingSound);
-    });
+    /////////////////////////////////// image functions ///////////////////////////
+    mod.loadingImage = false;
+    mod.isLoadingImage = new Sk.builtin.func(() => {   
+      return new Sk.builtin.bool(mod.loadingImage);
+    });      
+
+    mod.addImage = new Sk.builtin.func((url, width, height) => {
+      mod.loadingImage = true;
+      if (url.v !== null && url.v.length > 0) { 
+        addImage(url.v, width.v, height.v, () => { mod.loadingImage = false; }, () => { mod.loadingImage = false;});
+      };});   
 
     /////////////////////////////////// audio functions ///////////////////////////
     // only 1 audioElement at a time
 
     mod.audioElement = null;
+    mod.loadingSound = false;
+
+    mod.isLoadingSound = new Sk.builtin.func(() => {   
+      return new Sk.builtin.bool(mod.loadingSound);
+    });    
 
     mod.setVolume = new Sk.builtin.func((volume) => {
       if (mod.audioElement !== null) {
@@ -210,34 +223,20 @@ var $builtinmodule = function(name)
       }
     });
 
-    function stopSound() {
-      if (mod.audioElement !== null) {
-        document.body.removeChild(mod.audioElement);
-        mod.audioElement.pause();
-        mod.audioElement.currentTime = 0;
-        mod.audioElement.src ="";
-        mod.audioElement = null;        
-      }
-    }
-
     mod.stopSound = new Sk.builtin.func(() => {
       stopSound();
     });
     
     mod.playSound = new Sk.builtin.func((url, loop) => {
-      stopSound();
-      mod.audioElement = new Audio(url);
-      mod.audioElement.loop = loop;
       mod.loadingSound = true;
-      mod.audioElement.oncanplaythrough = (event) => {
-        mod.loadingSound = false;
-        mod.audioElement.play();  
-        document.body.appendChild(mod.audioElement);
-      };                      
+      createAudioElement(url, loop, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});                
     });
 
     mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
       mod.loadingSound = true;
+      playFreeSound(id, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;}); 
+      /*    
+      createAudioElement(url, loop, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});  
 
       // stop current sound
       stopSound();   
@@ -278,6 +277,7 @@ var $builtinmodule = function(name)
       } 
       
       xhr.send();    
+      */
     });
 
     mod.openAIWaiting = false;
