@@ -114,6 +114,9 @@ class Microbit:
 
     def getTemperature(self):                   # returns integer of temp reading
         return self.uBit.getTemperature()
+    
+    def getLightSensor(self):                   # returns integer of the light sensor
+        return self.uBit.getLightSensor()
 
     def getBearing(self):                       # returns number between 0 and 360 
         return self.uBit.getBearing()

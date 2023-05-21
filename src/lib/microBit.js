@@ -22,6 +22,7 @@ var $builtinmodule = function(name)
     var LED_STATE = 'e95d7b77-251d-470a-a062-fa1922dfa9a8'
     var LED_TEXT = 'e95d93ee-251d-470a-a062-fa1922dfa9a8'
     var LED_SCROLL = 'e95d0d2d-251d-470a-a062-fa1922dfa9a8'
+    var LED_LIGHT = 'e95d0d2e-251d-470a-a062-fa1922dfa9a8'
     var TEMP_SRV = 'e95d6100-251d-470a-a062-fa1922dfa9a8'
     var TEMP_DATA = 'e95d9250-251d-470a-a062-fa1922dfa9a8'
     var TEMP_PERIOD = 'e95d1b25-251d-470a-a062-fa1922dfa9a8'
@@ -47,6 +48,7 @@ var $builtinmodule = function(name)
 		'e95dd91d-251d-470a-a062-fa1922dfa9a8': 'LED_SRV',
 		'e95d7b77-251d-470a-a062-fa1922dfa9a8': 'LED_STATE',
 		'e95d93ee-251d-470a-a062-fa1922dfa9a8': 'LED_TEXT',
+    'e95d9d2e-251d-470a-a062-fa1922dfa9a8': 'LED_LIGHT',
 		'e95d0d2d-251d-470a-a062-fa1922dfa9a8': 'LED_SCROLL',
 		'e95d6100-251d-470a-a062-fa1922dfa9a8': 'TEMP_SRV',
 		'e95d9250-251d-470a-a062-fa1922dfa9a8': 'TEMP_DATA',
@@ -80,6 +82,7 @@ var $builtinmodule = function(name)
         this.writeInProgress = false;
         this.magnetometer_bearing = 0;
         this.temperature = 0;
+        this.light_sensor = 0;
 
         this.buttonA = 0;
         this.buttonAPressed = false;
@@ -359,6 +362,12 @@ var $builtinmodule = function(name)
           else {
             this.controller.statusMessages.push("Calibration successful!");	
           }
+        }
+
+        // LIGHT SENSOR CHARACTERISTIC
+        if (event.target.uuid == LED_LIGHT) {
+          // console.log("TEMP_DATA", event.target.value.getInt8());
+          this.light_sensor = event.target.value.getUint8();
         }
         
         this.onBLENotifyCallback();
@@ -751,6 +760,10 @@ var $builtinmodule = function(name)
 		
       $loc.getTemperature = new Sk.builtin.func((self) => {
               return new Sk.builtin.int_(self.microBit.temperature);
+          });
+
+      $loc.getLightSensor = new Sk.builtin.func((self) => {
+            return new Sk.builtin.int_(self.microBit.light_sensor);
           });
       
       $loc.getBearing = new Sk.builtin.func((self) => {
