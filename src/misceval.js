@@ -669,8 +669,9 @@ Sk.exportSymbol("Sk.misceval.print_", Sk.misceval.print_);
  * Sk.misceval.loadname("foo", Sk.globals);
  */
 Sk.misceval.loadname = function (name, other) {
-    var bi;
+    var bi;    
     var v = other[name];
+    
     if (v !== undefined) {
         return v;
     }

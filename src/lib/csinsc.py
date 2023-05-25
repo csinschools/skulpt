@@ -228,3 +228,43 @@ def getOpenAIImage(prompt):
         continue 
     hideSpinner()  
     return str(csinscTools.openAIResponse)
+
+#### cloud variables API
+def getCloudVariable(name):
+    showSpinner()
+    try:
+        csinscTools.getCloudVariable(name)
+        while csinscTools.cloudWaiting:
+            continue 
+        hideSpinner()  
+        value = csinscTools.cloudResponse["value"]
+        type = csinscTools.cloudResponse["type"]
+
+        response = None
+        if type == "int":
+            response = int(value)
+        elif type == "float":
+            response = float(value)
+        else:
+            response = str(value)
+        return response        
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error retrieving cloud variable: " + name)
+
+def setCloudVariable(name, value):
+    showSpinner()
+    inputstring = str(type(value))
+    typestring = inputstring.split("'")[1::2]
+    if len(typestring) == 0:
+        typestring = "str"
+    else:
+        typestring = typestring[0]
+    try:
+        csinscTools.setCloudVariable(name, value, typestring)
+        while csinscTools.cloudWaiting:
+            continue 
+        hideSpinner()      
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error setting cloud variable: " + name)        

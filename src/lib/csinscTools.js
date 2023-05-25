@@ -234,50 +234,7 @@ var $builtinmodule = function(name)
 
     mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
       mod.loadingSound = true;
-      playFreeSound(id, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;}); 
-      /*    
-      createAudioElement(url, loop, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});  
-
-      // stop current sound
-      stopSound();   
-
-      var xhr = new XMLHttpRequest();      
-      const requestURL =  "https://freesound.org/apiv2/sounds/" + id + "/?fields=previews&format=json&token=Vzf4dkU29E5ltPX1sfi2aqCkzG1aKgbITklKHROh";
-      console.log(requestURL);
-      xhr.open("GET", requestURL, true);
-      xhr.setRequestHeader('Content-type', 'application/json');
-      xhr.timeout = 10000; // time in milliseconds
-  
-      xhr.ontimeout = (e) => {
-        console.log("Timeout");
-      };    
-    
-      xhr.onerror = function() {
-        console.log("Error");
-      }
-      
-      xhr.onreadystatechange = function() {
-        console.log("Response:" + xhr.responseText);
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          if (xhr.responseText.length == 0) {
-          }
-          else {            
-            const response = JSON.parse(xhr.responseText);
-            const url = response["previews"]["preview-hq-ogg"];
-            mod.audioElement = new Audio(url);
-            
-            mod.audioElement.oncanplaythrough = (event) => {
-              mod.loadingSound = false;
-              mod.audioElement.play();              
-              document.body.appendChild(mod.audioElement);
-            };            
-            
-          }
-        }
-      } 
-      
-      xhr.send();    
-      */
+      playFreeSound(id, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});       
     });
 
     mod.openAIWaiting = false;
@@ -354,7 +311,95 @@ var $builtinmodule = function(name)
       
       xhr.send();    
     });    
+
+    mod.cloudWaiting = false;
+    mod.cloudResponse = "";
+
+    mod.setCloudVariable = new Sk.builtin.func((name, value, type) => {
+      value = encodeURIComponent(value)
+      
+      console.log("Attempting to set cloud variable:" + name + " as:" + value);
+      mod.cloudWaiting = true;
+      mod.cloudResponse = "";
+
+      var xhr = new XMLHttpRequest();      
+      const requestURL =  `https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
+      console.log(requestURL);
+      xhr.open("GET", requestURL, true);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.timeout = 10000; // time in milliseconds
+  
+      xhr.ontimeout = (e) => {
+        console.log("Timeout");
+        mod.cloudWaiting = false;
+      };    
     
+      xhr.onerror = function() {
+        console.log("Error");
+        mod.cloudWaiting = false;
+      }
+      
+      xhr.onreadystatechange = function() {
+        console.log("Response:" + xhr.responseText);
+        
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          
+          if (xhr.responseText.length > 0) {
+            mod.cloudResponse = xhr.responseText;                       
+          }
+          mod.cloudWaiting = false;
+        }
+      } 
+      
+      xhr.send();   
+    }); 
+
+    mod.getCloudVariable = new Sk.builtin.func((name) => {
+      
+        mod.cloudWaiting = true;
+        mod.cloudResponse = "";
+  
+        var xhr = new XMLHttpRequest();      
+        const requestURL =  `https://codestore-348206.ts.r.appspot.com/cloudvars/get?name=${name}`;
+        console.log(requestURL);
+        xhr.open("GET", requestURL, true);
+        xhr.setRequestHeader('Content-type', 'application/json');
+        xhr.timeout = 10000; // time in milliseconds
+    
+        xhr.ontimeout = (e) => {
+          console.log("Timeout");
+          mod.cloudWaiting = false;
+        };    
+      
+        xhr.onerror = function() {
+          console.log("Error");
+          mod.cloudWaiting = false;
+        }
+        
+        xhr.onreadystatechange = function() {
+          console.log("Response:" + xhr.responseText);
+          
+          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+            
+            try {
+              if (xhr.responseText.length > 0) {
+                
+                response = JSON.parse(xhr.responseText);              
+                response["value"] = decodeURIComponent(response["value"])
+                mod.cloudResponse = Sk.ffi.remapToPy(response);
+              } 
+            } catch (error) {
+              mod.cloudWaiting = false;
+              throw error;
+            }
+
+            mod.cloudWaiting = false;
+          }
+        } 
+        
+        xhr.send();   
+
+    });         
 
     return mod;
 }

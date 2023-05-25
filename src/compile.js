@@ -2941,8 +2941,27 @@ Compiler.prototype.nameop = function (name, ctx, dataToStore) {
             switch (ctx) {
                 case Sk.astnodes.Load:
                     // can't be || for loc.x = 0 or null
+                    // TODO: cloud variable here!
+                    // ALWAYS check cloud
+                    // TODO: create option to turn off for efficiency!
+                    
+                    /*
+                    if (mangledNoPre.substr(0, 6) == "cloud_") {
+                        return this._gr("loadname", mangled, "!==undefined?", mangled, ":getCloudVariable('", mangledNoPre, "',$gbl);");               
+                    } else {
+                        return this._gr("loadname", mangled, "!==undefined?", mangled, ":Sk.misceval.loadname('", mangledNoPre, "',$gbl);");
+                    }              
+                    */      
                     return this._gr("loadname", mangled, "!==undefined?", mangled, ":Sk.misceval.loadname('", mangledNoPre, "',$gbl);");
                 case Sk.astnodes.Store:
+                    // TODO: cloud variable here!
+                    /*
+                    if (mangledNoPre.substr(0, 6) == "cloud_") {
+                        out("setCloudVariable('", mangledNoPre, "',", dataToStore, ");");                    
+                    } else {
+                        out(mangled, "=", dataToStore, ";");
+                    }
+                    */
                     out(mangled, "=", dataToStore, ";");
                     break;
                 case Sk.astnodes.Del:
