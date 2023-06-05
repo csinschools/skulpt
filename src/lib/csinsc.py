@@ -37,6 +37,14 @@ class Style:
     italics = "\u001b[ 3;2;0;0;0 m"
     underline = "\u001b[ 4;2;0;0;0 m"
 
+
+#schoolID = ""
+# use a default string to enable via web service as needed for (temp) global access
+schoolID = "school_default"
+def setSchool(id):
+    global schoolID
+    schoolID = id
+
 # sep='' default argument required for the + concatenation training wheel
 # named argument now required for voice
 # def say(*args, voice = 0, sep = ''):
@@ -212,47 +220,79 @@ def input_num(*args):
 def input_string(*args):
     return input(*args)
 
-#### openAI API
+################################################### openAI API ###################################################
 def getOpenAICompletion(prompt):
-    showSpinner()
-    csinscTools.getOpenAICompletion(prompt)
-    while csinscTools.openAIWaiting:
-        continue 
-    hideSpinner()  
-    return str(csinscTools.openAIResponse)
-
-def getOpenAIImage(prompt):
-    showSpinner()
-    csinscTools.getOpenAIImage(prompt)
-    while csinscTools.openAIWaiting:
-        continue 
-    hideSpinner()  
-    return str(csinscTools.openAIResponse)
-
-#### cloud variables API
-def getCloudVariable(name):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")       
     showSpinner()
     try:
-        csinscTools.getCloudVariable(name)
-        while csinscTools.cloudWaiting:
-            continue 
-        hideSpinner()  
-        value = csinscTools.cloudResponse["value"]
-        type = csinscTools.cloudResponse["type"]
-
-        response = None
-        if type == "int":
-            response = int(value)
-        elif type == "float":
-            response = float(value)
-        else:
-            response = str(value)
-        return response        
+        csinscTools.getOpenAICompletion(prompt, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error retrieving cloud variable: " + name)
+        raise Exception("Error running getOpenAIImage with prompt: " + prompt)            
+    while csinscTools.openAIWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.openAIStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.openAIStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))                     
+    response = csinscTools.openAIResponse
+    return str(response)
+
+def getOpenAIImage(prompt):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")       
+    showSpinner()
+    try:
+        csinscTools.getOpenAIImage(prompt, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running getOpenAIImage with prompt: " + prompt)            
+    while csinscTools.openAIWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.openAIStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.openAIStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))                   
+    response = csinscTools.openAIResponse
+    return str(response)
+
+################################################### cloud variables API ###################################################
+def getCloudVariable(name):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")       
+    showSpinner()
+    try:
+        csinscTools.getCloudVariable(name, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running TestAPI with param: " + param)           
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()       
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus == 418:
+        raise Exception("Variable: " + name + " doesn't exist as a cloud variable.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse["response"]))            
+    value = csinscTools.cloudResponse["value"]
+    type = csinscTools.cloudResponse["type"]    
+    response = None
+    if type == "int":
+        response = int(value)
+    elif type == "float":
+        response = float(value)
+    else:
+        response = str(value) 
+    return response         
+
 
 def setCloudVariable(name, value):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")    
     showSpinner()
     inputstring = str(type(value))
     typestring = inputstring.split("'")[1::2]
@@ -261,10 +301,34 @@ def setCloudVariable(name, value):
     else:
         typestring = typestring[0]
     try:
-        csinscTools.setCloudVariable(name, value, typestring)
-        while csinscTools.cloudWaiting:
-            continue 
-        hideSpinner()      
+        csinscTools.setCloudVariable(name, value, typestring, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error setting cloud variable: " + name)        
+        raise Exception("Error running TestAPI with param: " + param)            
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()      
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))        
+    return str(csinscTools.cloudResponse)      
+    
+################################################### test API ###################################################
+def getTestAPI(param):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")
+    showSpinner()
+    try:
+        csinscTools.getTestAPI(param, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running TestAPI with param: " + param)        
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+    return str(csinscTools.cloudResponse)

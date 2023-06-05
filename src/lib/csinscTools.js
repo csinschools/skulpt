@@ -1,3 +1,6 @@
+//var codestoreURL = "https://codestore-348206.ts.r.appspot.com/";
+var codestoreURL = "http://localhost:3000/";
+
 var $builtinmodule = function(name)
 {
     var mod = {};
@@ -37,26 +40,7 @@ var $builtinmodule = function(name)
         $loc.italics = new Sk.builtin.str("\u001b[ 3;2;0;0;0 m");    
         $loc.underline = new Sk.builtin.str("\u001b[ 4;2;0;0;0 m");    
     }, 'Style', []); 
-    
-    mod.sendsms = new Sk.builtin.func((number, message) => {
-        var data = "number="+ number + "&msg=" + message;
 
-        var xhr = new XMLHttpRequest();
-        xhr.withCredentials = true;
-
-        xhr.addEventListener("readystatechange", function () {
-             if (this.readyState === 4) {
-                console.log(this.responseText);
-             }
-        });
-
-        xhr.open("GET", "https://csinsc-codestore.azurewebsites.net/sendtext?" + data);
-        xhr.setRequestHeader("cache-control", "no-cache");
-        xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
-        xhr.withCredentials = false;
-        xhr.send(data);        
-    });
-    
     mod.synth = window.speechSynthesis;
     mod.voices = [];
     
@@ -127,8 +111,6 @@ var $builtinmodule = function(name)
 
     const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
     const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
-
-      
 
     mod.startListen = new Sk.builtin.func(() => {
       mod.recognition = new SpeechRecognition();  
@@ -237,171 +219,229 @@ var $builtinmodule = function(name)
       playFreeSound(id, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});       
     });
 
+    /////////////////////////////////////// Open AI APIs ///////////////////////////////////////
+
     mod.openAIWaiting = false;
     mod.openAIResponse = "";
+    mod.openAIStatus = 0;
 
-    mod.getOpenAICompletion = new Sk.builtin.func((prompt) => {
+    mod.getOpenAICompletion = new Sk.builtin.func((prompt, school) => {
       mod.openAIWaiting = true;
       mod.openAIResponse = "";
-
+      mod.openAIStatus = 0;
       var xhr = new XMLHttpRequest();      
-      const requestURL =  "https://codestore-348206.ts.r.appspot.com/openai/completion?prompt=" + prompt;
+      const requestURL =  `${codestoreURL}openai/completion?prompt=${prompt}&school=${school}`;//"https://codestore-348206.ts.r.appspot.com/openai/completion?prompt=" + prompt;
       console.log(requestURL);
       xhr.open("GET", requestURL, true);
       xhr.setRequestHeader('Content-type', 'application/json');
-      xhr.timeout = 10000; // time in milliseconds
-  
+      xhr.timeout = 20000; // time in milliseconds
       xhr.ontimeout = (e) => {
         console.log("Timeout");
         mod.openAIWaiting = false;
-      };    
-    
+        mod.openAIStatus = Sk.ffi.remapToPy(408);
+      };        
       xhr.onerror = function() {
         console.log("Error");
         mod.openAIWaiting = false;
-      }
-      
+        mod.openAIStatus = Sk.ffi.remapToPy(408);
+      }      
       xhr.onreadystatechange = function() {
-        console.log("Response:" + xhr.responseText);
-        
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          
+        console.log("Response:" + xhr.responseText);        
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
           if (xhr.responseText.length > 0) {
-            mod.openAIResponse = xhr.responseText;                       
+            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+            mod.openAIResponse = response["response"];
+            mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"]));                
           }
           mod.openAIWaiting = false;
         }
-      } 
-      
-      xhr.send();    
+      }       
+      xhr.send();  
     });    
 
-    mod.getOpenAIImage = new Sk.builtin.func((prompt) => {
+    mod.getOpenAIImage = new Sk.builtin.func((prompt, school) => {
       mod.openAIWaiting = true;
       mod.openAIResponse = "";
-
+      mod.openAIStatus = 0;
       var xhr = new XMLHttpRequest();      
-      const requestURL =  "https://codestore-348206.ts.r.appspot.com/openai/image?prompt=" + prompt;
+      const requestURL =  `${codestoreURL}openai/image?prompt=${prompt}&school=${school}`;
       console.log(requestURL);
       xhr.open("GET", requestURL, true);
       xhr.setRequestHeader('Content-type', 'application/json');
-      xhr.timeout = 10000; // time in milliseconds
-  
+      xhr.timeout = 20000; // time in milliseconds
       xhr.ontimeout = (e) => {
         console.log("Timeout");
         mod.openAIWaiting = false;
-      };    
-    
+        mod.openAIStatus = Sk.ffi.remapToPy(408);
+      };        
       xhr.onerror = function() {
         console.log("Error");
         mod.openAIWaiting = false;
-      }
-      
+        mod.openAIStatus = Sk.ffi.remapToPy(408);
+      }      
       xhr.onreadystatechange = function() {
-        console.log("Response:" + xhr.responseText);
-        
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          
+        console.log("Response:" + xhr.responseText);        
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
           if (xhr.responseText.length > 0) {
-            mod.openAIResponse = xhr.responseText;                       
+            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+            mod.openAIResponse = response["response"];
+            mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"]));                
           }
           mod.openAIWaiting = false;
         }
-      } 
-      
+      }       
       xhr.send();    
     });    
 
+    //////////////////////////////////////////// Cloud Variables API ////////////////////////////////////////////
     mod.cloudWaiting = false;
     mod.cloudResponse = "";
+    mod.cloudStatus = 0;
 
-    mod.setCloudVariable = new Sk.builtin.func((name, value, type) => {
-      value = encodeURIComponent(value)
-      
+    mod.setCloudVariable = new Sk.builtin.func((name, value, type, school) => {
+      value = encodeURIComponent(value)      
       console.log("Attempting to set cloud variable:" + name + " as:" + value);
       mod.cloudWaiting = true;
       mod.cloudResponse = "";
-
+      mod.cloudStatus = 0;
       var xhr = new XMLHttpRequest();      
-      const requestURL =  `https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
+      const requestURL =  `${codestoreURL}cloudvars/put?name=${name}&val=${value}&type=${type}&school=${school}`;//`https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
       console.log(requestURL);
       xhr.open("GET", requestURL, true);
       xhr.setRequestHeader('Content-type', 'application/json');
       xhr.timeout = 10000; // time in milliseconds
-  
-      xhr.ontimeout = (e) => {
+        xhr.ontimeout = (e) => {
         console.log("Timeout");
         mod.cloudWaiting = false;
-      };    
-    
+        mod.cloudResponse = "Error trying to set cloud variable " + name + ": timeout.";
+        mod.cloudStatus = Sk.ffi.remapToPy(408);
+      };       
       xhr.onerror = function() {
         console.log("Error");
         mod.cloudWaiting = false;
-      }
-      
+        mod.cloudResponse = "Error trying to set cloud variable " + name + ": problems with accessing the API.";
+        mod.cloudStatus = Sk.ffi.remapToPy(408);
+      }      
       xhr.onreadystatechange = function() {
-        console.log("Response:" + xhr.responseText);
-        
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          
+        console.log("Response:" + xhr.responseText);        
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
           if (xhr.responseText.length > 0) {
-            mod.cloudResponse = xhr.responseText;                       
-          }
-          mod.cloudWaiting = false;
-        }
-      } 
-      
+            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+            mod.cloudResponse = response["response"];
+            mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+            mod.cloudWaiting = false;
+          } 
+        } 
+      }
       xhr.send();   
     }); 
 
-    mod.getCloudVariable = new Sk.builtin.func((name) => {
-      
+    mod.getCloudVariable = new Sk.builtin.func((name, school) => {      
         mod.cloudWaiting = true;
         mod.cloudResponse = "";
-  
+        mod.cloudStatus = 0;
         var xhr = new XMLHttpRequest();      
-        const requestURL =  `https://codestore-348206.ts.r.appspot.com/cloudvars/get?name=${name}`;
+        const requestURL =  `${codestoreURL}cloudvars/get?name=${name}&school=${school}`;//const requestURL =  `https://codestore-348206.ts.r.appspot.com/cloudvars/get?name=${name}`;
         console.log(requestURL);
         xhr.open("GET", requestURL, true);
         xhr.setRequestHeader('Content-type', 'application/json');
-        xhr.timeout = 10000; // time in milliseconds
-    
+        xhr.timeout = 10000; // time in milliseconds    
         xhr.ontimeout = (e) => {
           console.log("Timeout");
           mod.cloudWaiting = false;
-        };    
-      
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          mod.cloudResponse = "Error trying to get cloud variable " + name + ": timeout.";
+        };          
         xhr.onerror = function() {
           console.log("Error");
           mod.cloudWaiting = false;
-        }
-        
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          mod.cloudResponse = "Error trying to set cloud variable " + name + ": problems with accessing the API.";
+        }        
         xhr.onreadystatechange = function() {
-          console.log("Response:" + xhr.responseText);
-          
-          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-            
-            try {
-              if (xhr.responseText.length > 0) {
-                
-                response = JSON.parse(xhr.responseText);              
-                response["value"] = decodeURIComponent(response["value"])
-                mod.cloudResponse = Sk.ffi.remapToPy(response);
-              } 
-            } catch (error) {
+          console.log("Response:" + xhr.responseText);          
+          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {            
+            if (xhr.responseText.length > 0) {
+              let response =  JSON.parse(xhr.responseText);               
+              response["value"] = decodeURIComponent(response["value"]);
+              mod.cloudResponse = Sk.ffi.remapToPy(response);                
+              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
               mod.cloudWaiting = false;
-              throw error;
-            }
-
-            mod.cloudWaiting = false;
+            } 
           }
-        } 
-        
+        }         
         xhr.send();   
 
-    });         
+  });       
 
-    return mod;
+  //////////////////////////////////////////// Send SMS API ////////////////////////////////////////////
+  mod.sendsms = new Sk.builtin.func((number, message, school) => {
+    var xhr = new XMLHttpRequest();      
+    const requestURL =  `${codestoreURL}sendtext?number=${number}&msg=${message}&school=${school}`;
+    console.log(requestURL);
+    xhr.open("GET", requestURL, true);
+    xhr.setRequestHeader("cache-control", "no-cache");
+    xhr.setRequestHeader("content-type", "application/x-www-form-urlencoded");
+    xhr.withCredentials = false;
+    xhr.timeout = 20000; // time in milliseconds
+    xhr.ontimeout = (e) => {
+      console.log("sendsms api Timeout");
+    };        
+    xhr.onerror = function() {
+      console.log("sendsms api Error");
+    }      
+    xhr.onreadystatechange = function() {
+      console.log("Response:" + xhr.responseText);        
+      if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
+        console.log(this.responseText);
+      }
+    }       
+    xhr.send();               
+  });  
+  
+  //////////////////////////////////////////// Test API ////////////////////////////////////////////
+
+  mod.getTestAPI = new Sk.builtin.func((param, school) => {      
+    mod.cloudWaiting = true;
+    mod.cloudResponse = "";
+    mod.cloudStatus = Sk.ffi.remapToPy(408);
+    var xhr = new XMLHttpRequest();      
+    const requestURL =  `${codestoreURL}test/testapi?param=${param}&school=${school}`;
+    console.log(requestURL);
+    xhr.open("GET", requestURL, true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.timeout = 10000; // time in milliseconds
+    xhr.ontimeout = (e) => {
+      console.log("Timeout");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    };        
+    xhr.onerror = function() {
+      console.log("Error");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    }      
+    xhr.onreadystatechange = function() {
+      console.log("Response:" + xhr.responseText);       
+      if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
+        try {
+          if (xhr.responseText.length > 0) {              
+            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+            mod.cloudResponse = response["response"];
+            mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+            mod.cloudWaiting = false;
+          } 
+        } catch (error) {
+          mod.cloudWaiting = false;
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          throw error;
+        }
+      }
+    }       
+    xhr.send();   
+  });          
+
+  return mod;
 }
 
 // test comment to make sure github set up properly
