@@ -1,5 +1,5 @@
-//var codestoreURL = "https://codestore-348206.ts.r.appspot.com/";
-var codestoreURL = "http://localhost:3000/";
+var codestoreURL = "https://codestore-348206.ts.r.appspot.com/";
+//var codestoreURL = "http://localhost:3000/";
 
 var $builtinmodule = function(name)
 {
