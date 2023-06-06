@@ -50,16 +50,16 @@ def setSchool(id):
 # def say(*args, voice = 0, sep = ''):
 # removing for 2023 intermediate course, back to positional voice arg 
 firstUtterance = True
-def say(text, voice = 0):    
+def say(text, voice = 0, language = "english"):    
     global firstUtterance
     #text = ''.join([str(arg) for arg in args])
     # add a delay for the first utterance to allow speech engine to lazily load
     # TODO: not working!
     if firstUtterance:
-        csinscTools.saySomething("", voice)    
+        csinscTools.saySomething("", voice, language)    
         sleep(1)
         firstUtterance = False
-    csinscTools.saySomething(text, voice)
+    csinscTools.saySomething(text, voice, language)
     # block until finished speaking
     while csinscTools.isSpeaking():
         continue    
@@ -314,6 +314,25 @@ def setCloudVariable(name, value):
         raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))        
     return str(csinscTools.cloudResponse)      
     
+################################################### Translate API ###################################################
+def getTranslationAPI(text, languageTarget = "english"):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")
+    showSpinner()
+    try:
+        csinscTools.getTranslationAPI(text, languageTarget, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running TestAPI with param: " + param)        
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+    return str(csinscTools.cloudResponse)
+
 ################################################### test API ###################################################
 def getTestAPI(param):
     if len(schoolID) == 0:

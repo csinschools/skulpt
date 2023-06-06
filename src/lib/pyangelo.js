@@ -14,6 +14,8 @@ var $builtinmodule = function(name)
     
     var _commands = [];
     var _activeCommands = null;
+
+    var _images = {};
      
     var colours = {};
     colours[Sk.builtins.BLACK] = "rgba(0, 0, 0, 1)";
@@ -80,6 +82,14 @@ var $builtinmodule = function(name)
         ctx.font = args.font;
         ctx.fillText(args.text, args.x, _convY(args.y));
     }
+
+    function _drawImage(args)
+    {
+        ctx.save();
+        ctx.globalAlpha = args.opacity;
+        ctx.drawImage(args.image, args.x, _convY(args.y) - args.height, args.width, args.height);
+        ctx.restore();
+    }    
 
     function _drawRect(args)
     {
@@ -232,6 +242,30 @@ var $builtinmodule = function(name)
         return new Sk.builtin.none;        
     });
 
+    mod.drawImage = new Sk.builtin.func(async (imageURL, x, y, width, height, opacity) => {   
+        if (opacity === undefined) {
+            opacity = 1.0;
+        }
+        args = {};
+        if (!(imageURL in _images)) {
+            var newImage = new Image();
+            await new Promise((resolve) => { newImage.onload = resolve; newImage.src = imageURL});
+            _images[imageURL] = newImage;
+        }
+
+        var image = _images[imageURL];
+        args.image = image;
+        args.x = x;
+        args.y = y;
+        args.width = width;
+        args.height = height;
+        args.opacity = opacity;
+               
+        _commands.push([_drawImage, args]);
+        
+        return new Sk.builtin.none;        
+    });
+
     mod.drawLine = new Sk.builtin.func((x1, y1, x2, y2, lineWidth, color, g , b, a) => {
         args = {};
                 
@@ -281,7 +315,7 @@ var $builtinmodule = function(name)
     mod.fillRect = new Sk.builtin.func((x, y, width, height, color, g , b, a) => {   
         args = {};
         
-        args.fillStyle = getColour(color);
+        args.fillStyle = getColour(color, g, b, a);
         
         args.x = x;
         args.y = y;

@@ -3,6 +3,7 @@ var codestoreURL = "https://codestore-348206.ts.r.appspot.com/";
 
 var $builtinmodule = function(name)
 {
+
     var mod = {};
         
     mod.Colour = Sk.misceval.buildClass(mod, function($gbl, $loc) {
@@ -57,7 +58,7 @@ var $builtinmodule = function(name)
       mod.saySomething(text, voice);
     })
     
-    mod.saySomething = new Sk.builtin.func((text, voice) => {    
+    mod.saySomething = new Sk.builtin.func((text, voice, lang) => {    
       const badWords = [
         'YXJzZQ==',         'YXJzZWhvbGU=',     'YmFsbHM=',         'YmFzdGFyZA==',
         'YmVlZg==',         'Y3VydGFpbnM=',     'Y3Vt',             'YmVsbGVuZA==',
@@ -100,6 +101,15 @@ var $builtinmodule = function(name)
       utterThis.voice = mod.voices[voice];
       utterThis.pitch = 1;
       utterThis.rate = 1;
+
+      if (lang !== undefined) {
+        if (!(lang in languages)) {
+          throw "Unknown language";
+        }
+        lang = languages[lang];
+        utterThis.lang = lang;
+      }
+
       mod.synth.speak(utterThis);        
       
       return new Sk.builtin.none;       
@@ -398,7 +408,53 @@ var $builtinmodule = function(name)
     }       
     xhr.send();               
   });  
-  
+
+  //////////////////////////////////////////// Translate API ////////////////////////////////////////////
+  mod.getTranslationAPI = new Sk.builtin.func((text, target, school) => {      
+    mod.cloudWaiting = true;
+    mod.cloudResponse = "";
+    mod.cloudStatus = Sk.ffi.remapToPy(408);
+    var xhr = new XMLHttpRequest();      
+    const requestURL =  `${codestoreURL}translate?text=${text}&target=${target}&school=${school}`;
+    console.log(requestURL);
+    xhr.open("GET", requestURL, true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.timeout = 10000; // time in milliseconds
+    xhr.ontimeout = (e) => {
+      console.log("Timeout");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    };        
+    xhr.onerror = function() {
+      console.log("Error");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    }      
+    xhr.onreadystatechange = function() {
+      console.log("Response:" + xhr.responseText);       
+      if (this.readyState === XMLHttpRequest.DONE) {          
+        if (this.status === 200) {
+          try {
+            if (xhr.responseText.length > 0) {              
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.cloudResponse = response["response"];
+              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+              mod.cloudWaiting = false;
+            } 
+          } catch (error) {
+            mod.cloudWaiting = false;
+            mod.cloudStatus = Sk.ffi.remapToPy(408);
+            throw error;
+          }         
+        } else {
+          mod.cloudWaiting = false;
+          mod.cloudStatus = Sk.ffi.remapToPy(this.status);
+          throw "Web Service Error";
+        }
+      }
+    }       
+    xhr.send();   
+  });    
   //////////////////////////////////////////// Test API ////////////////////////////////////////////
 
   mod.getTestAPI = new Sk.builtin.func((param, school) => {      
@@ -440,6 +496,66 @@ var $builtinmodule = function(name)
     }       
     xhr.send();   
   });          
+
+  var languages = {
+    'arabic':'ar-SA',
+    'bangla':'bn-BD',
+    'indian bangla':'bn-IN',
+    'czech':'cs-CZ',
+    'danish':'da-DK',
+    'austrian german':'de-AT',
+    'swiss german':'de-CH',
+    'german':'de-DE',
+    'greek':'el-GR',
+    'english':'en-AU',
+    'australian english':'en-AU',
+    'canadian english':'en-CA',
+    'british english':'en-GB',
+    'irish english':'en-IE',
+    'indian english':'en-IN',
+    'new zeland english':'en-NZ',
+    'american english':'en-US',
+    'south african english':'en-ZA',
+    'argentine spanish':'es-AR',
+    'chilean spanish':'es-CL',
+    'colombian spanish':'es-CO',
+    'spanish':'es-ES',
+    'mexican spanish':'es-MX',
+    'american spanish':'es-US',
+    'finnish':'fi-FI',
+    'belgian french':'fr-BE',
+    'canadian french':'fr-CA',
+    'swiss french':'fr-CH',
+    'french':'fr-FR',
+    'hebrew':'he-IL',
+    'hindi':'hi-IN',
+    'hungarian':'hu-HU',
+    'indonesian':'id-ID',
+    'swiss italian':'it-CH',
+    'italian':'it-IT',
+    'japanese':'ja-JP',
+    'korean':'ko-KR',
+    'belgian dutch':'nl-BE',
+    'dutch':'nl-NL',
+    'norwegian':'no-NO',
+    'polish':'pl-PL',
+    'brazilian portugese':'pt-BR',
+    'portugese':'pt-PT',
+    'romanian':'ro-RO',
+    'russian':'ru-RU',
+    'slovak':'sk-SK',
+    'swedish':'sv-SE',
+    'tamil':'ta-IN',
+    'sri lankan tamil':'ta-LK',
+    'thai':'th-TH',
+    'turkish':'tr-TR',
+    'chinese':'zh-CN',
+    'mandarin':'zh-CN',    
+    'hong kong chinese':'zh-HK',
+    'cantonese':'zh-HK',
+    'taiwan chinese':'zh-TW',
+    'taiwanese':'zh-TW',      
+  };  
 
   return mod;
 }
