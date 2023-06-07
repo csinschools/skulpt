@@ -410,7 +410,7 @@ var $builtinmodule = function(name)
   });  
 
   //////////////////////////////////////////// Translate API ////////////////////////////////////////////
-  mod.getTranslationAPI = new Sk.builtin.func((text, target, school) => {      
+  mod.getTranslation = new Sk.builtin.func((text, target, school) => {      
     mod.cloudWaiting = true;
     mod.cloudResponse = "";
     mod.cloudStatus = Sk.ffi.remapToPy(408);

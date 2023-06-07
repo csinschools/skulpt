@@ -315,12 +315,12 @@ def setCloudVariable(name, value):
     return str(csinscTools.cloudResponse)      
     
 ################################################### Translate API ###################################################
-def getTranslationAPI(text, languageTarget = "english"):
+def getTranslation(text, languageTarget = "english"):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")
     showSpinner()
     try:
-        csinscTools.getTranslationAPI(text, languageTarget, schoolID)
+        csinscTools.getTranslation(text, languageTarget, schoolID)
     except Exception as e:
         hideSpinner() 
         raise Exception("Error running TestAPI with param: " + param)        
