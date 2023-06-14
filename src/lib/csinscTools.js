@@ -103,6 +103,7 @@ var $builtinmodule = function(name)
       utterThis.rate = 1;
 
       if (lang !== undefined) {
+        lang = lang.toString().toLowerCase();
         if (!(lang in languages)) {
           throw "Unknown language";
         }
@@ -495,8 +496,41 @@ var $builtinmodule = function(name)
       }
     }       
     xhr.send();   
-  });          
+  });        
+  
+  //////////////////////////////////////////// Web Cam ////////////////////////////////////////////
+  mod.webcamWaiting = false;
 
+  mod.showWebCam = new Sk.builtin.func(async () => { 
+    mod.webcamWaiting = true;
+    // function in console.js
+    await createWebCam();
+    mod.webcamWaiting = false;
+  });
+
+  mod.printWebCam = new Sk.builtin.func(async () => { 
+    mod.webcamWaiting = true;
+    // function in console.js
+    await printWebCam();
+    mod.webcamWaiting = false;
+  });  
+
+  mod.pauseWebCam = new Sk.builtin.func(async () => { 
+    mod.webcamWaiting = true;
+    // function in console.js
+    pauseWebCam();
+    mod.webcamWaiting = false;
+  });
+
+  mod.resumeWebCam = new Sk.builtin.func(async () => { 
+    mod.webcamWaiting = true;
+    // function in console.js
+    resumeWebCam();
+    mod.webcamWaiting = false;
+  });  
+
+  //////////////////////////////////////////// Lanugages Mapping ////////////////////////////////////////////
+   
   var languages = {
     'arabic':'ar-SA',
     'bangla':'bn-BD',

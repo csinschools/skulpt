@@ -351,3 +351,52 @@ def getTestAPI(param):
     elif csinscTools.cloudStatus != 200:
         raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
     return str(csinscTools.cloudResponse)
+
+################################################### webcam ###################################################
+def showWebCam():
+    showSpinner()
+    try:
+        csinscTools.showWebCam()
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to show webcam")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    return
+
+def printWebCam():
+    showSpinner()
+    try:
+        csinscTools.printWebCam()
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to show webcam")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    return    
+
+def pauseWebCam():
+    showSpinner()
+    try:
+        csinscTools.pauseWebCam()
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to show webcam")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    return
+
+def resumeWebCam():
+    showSpinner()
+    try:
+        csinscTools.resumeWebCam()
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to show webcam")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    return
