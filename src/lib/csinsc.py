@@ -17,6 +17,7 @@ class Colour:
     magenta = "\u001b[ 38;2;255;0;255 m"
     orange = "\u001b[ 38;2;255;165;0 m"
     purple = "\u001b[ 38;2;127;0;255 m"
+    pink = "\u001b[ 38;2;255;192;203 m" 
 
 class Highlight:
     red = "\u001b[ 48;2;255;0;0 m"
@@ -31,11 +32,13 @@ class Highlight:
     magenta = "\u001b[ 48;2;255;0;255 m"
     orange = "\u001b[ 48;2;255;165;0 m"
     purple = "\u001b[ 48;2;127;0;255 m"    
+    pink = "\u001b[ 48;2;255;192;203 m" 
     
 class Style:
     bold = "\u001b[ 1;2;0;0;0 m"
     italics = "\u001b[ 3;2;0;0;0 m"
     underline = "\u001b[ 4;2;0;0;0 m"
+    default = "\u001b[ 5;2;0;0;0 m"
 
 
 #schoolID = ""
