@@ -368,6 +368,49 @@ def showWebCam():
     hideSpinner()    
     return
 
+def predictFromImage(param, topK = 1):
+    showSpinner()
+    try:
+        # todo: branch depending of para datatype
+        # exceptions won't be thrown here because it's an async javascript call
+        csinscTools.predictFromImage(param, topK)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to predict from an image URL using the Image model")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    # need to check for error status
+    return csinscTools.webcamResponse
+
+def predictFromWebCam(topK = 1):
+    showSpinner()
+    try:
+        # todo: branch depending of para datatype
+        csinscTools.predictFromWebCam(topK)
+     
+        while csinscTools.webcamWaiting:
+            continue 
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to predict from webcam using the Image model")           
+    hideSpinner()    
+    if csinscTools.webcamStatus != 0:
+        raise Exception(str(csinscTools.webcamResponse))
+    return csinscTools.webcamResponse
+
+def loadImageModel(url = None):
+    showSpinner()
+    try:
+        csinscTools.loadImageModel(url)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to load the Image model")        
+    while csinscTools.webcamWaiting:
+        continue 
+    hideSpinner()    
+    return
+
 def printWebCam():
     showSpinner()
     try:

@@ -500,6 +500,9 @@ var $builtinmodule = function(name)
   
   //////////////////////////////////////////// Web Cam ////////////////////////////////////////////
   mod.webcamWaiting = false;
+  mod.webcamResponse = "";
+  mod.tmImageModel = null;
+  mod.webcamStatus = Sk.ffi.remapToPy(0);
 
   mod.showWebCam = new Sk.builtin.func(async () => { 
     mod.webcamWaiting = true;
@@ -515,6 +518,31 @@ var $builtinmodule = function(name)
     mod.webcamWaiting = false;
   });  
 
+  async function tmImageDialogBtnPressed() {   
+      // you need to create File objects, like with file input elements (<input type="file" ...>)
+      const uploadModel = document.getElementById('upload-model');
+      const uploadWeights = document.getElementById('upload-weights');
+      const uploadMetadata = document.getElementById('upload-metadata');
+      mod.tmImageModel = await tmImage.loadFromFiles(uploadModel.files[0], uploadWeights.files[0], uploadMetadata.files[0]);  
+      mod.webcamWaiting = false;      
+  }
+
+  mod.loadImageModel = new Sk.builtin.func(async (url) => {
+    mod.webcamWaiting = true;
+    if (url.v === null) {
+      document.getElementById("tmImageDialogOKBtn").removeEventListener("click", tmImageDialogBtnPressed);
+      document.getElementById("tmImageDialogOKBtn").addEventListener("click", tmImageDialogBtnPressed);
+      await loadImageModel();    
+    } else {
+      modelurl = url.v;
+      if (modelurl.slice(-1) !== "/") {
+        modelurl = modelurl +  "/";
+      }
+      mod.tmImageModel = await tmImage.load(modelurl + "model.json", modelurl + "metadata.json");  
+      mod.webcamWaiting = false; 
+    }
+  });
+
   mod.pauseWebCam = new Sk.builtin.func(async () => { 
     mod.webcamWaiting = true;
     // function in console.js
@@ -527,7 +555,68 @@ var $builtinmodule = function(name)
     // function in console.js
     resumeWebCam();
     mod.webcamWaiting = false;
+  });
+
+  mod.predictFromImage = new Sk.builtin.func(async (url, topK) => {
+    mod.webcamWaiting = true;
+    mod.webcamStatus = Sk.ffi.remapToPy(0);
+    if (Sk.ffi.remapToJs(topK) == -1) {
+      topK = mod.tmImageModel.getTotalClasses();
+    }
+    var img = new Image();
+    try {
+      if (url.v !== null && url.v.length > 0) {       
+        await new Promise((resolve) => { img.onload = resolve; img.src = url.v; img.crossOrigin = 'anonymous';});      
+      }
+      await tmImagePredict(img, topK);
+    } catch (error) {
+      mod.webcamWaiting = false;
+      mod.webcamStatus = Sk.ffi.remapToPy(1);
+      mod.webcamResponse = new Sk.builtin.str("Error with predicting from image.");
+      throw error;
+    }
+  });
+
+  mod.predictFromWebCam = new Sk.builtin.func(async (topK) => {
+    mod.webcamWaiting = true;
+    mod.webcamStatus = Sk.ffi.remapToPy(0);
+    if (Sk.ffi.remapToJs(topK) == -1) {
+      topK = mod.tmImageModel.getTotalClasses();
+    }    
+    canvas = getWebCamCanvas();
+    if (canvas === null) {
+      mod.webcamWaiting = false;
+      mod.webcamStatus = Sk.ffi.remapToPy(1);
+      mod.webcamResponse = new Sk.builtin.str("WebCam not set up.");           
+      throw "WebCam not set up."        
+    }     
+    try {     
+      await tmImagePredict(canvas, topK);
+    } catch (error) {
+      mod.webcamWaiting = false;
+      mod.webcamStatus = Sk.ffi.remapToPy(1);
+      mod.webcamResponse = new Sk.builtin.str("Error with predicting from webcam.");      
+      throw error;
+    }
   });  
+
+  async function tmImagePredict(src, topK) {
+    try {
+      const prediction = await mod.tmImageModel.predictTopK(src, topK);
+
+      //let response = "";
+      let response =[];
+      for (let i = 0; i < topK; i++) {
+        response.push([new Sk.builtin.str(prediction[i].className), new Sk.builtin.float_(prediction[i].probability.toFixed(2))]);
+      }    
+      mod.webcamResponse = Sk.ffi.remapToPy(response);
+      mod.webcamWaiting = false;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+  
 
   //////////////////////////////////////////// Lanugages Mapping ////////////////////////////////////////////
    
