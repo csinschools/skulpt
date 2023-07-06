@@ -380,8 +380,13 @@ def predictFromImage(param, topK = 1):
     while csinscTools.webcamWaiting:
         continue 
     hideSpinner()    
-    # need to check for error status
-    return csinscTools.webcamResponse
+    if csinscTools.webcamStatus != 0:
+        raise Exception(str(csinscTools.webcamResponse))
+        
+    response = csinscTools.webcamResponse
+    if topK == 1:
+        response = response[0]
+    return response
 
 def predictFromWebCam(topK = 1):
     showSpinner()
@@ -397,7 +402,10 @@ def predictFromWebCam(topK = 1):
     hideSpinner()    
     if csinscTools.webcamStatus != 0:
         raise Exception(str(csinscTools.webcamResponse))
-    return csinscTools.webcamResponse
+    response = csinscTools.webcamResponse
+    if topK == 1:
+        response = response[0]
+    return response
 
 def loadImageModel(url = None):
     showSpinner()
