@@ -336,6 +336,25 @@ def getTranslation(text, languageTarget = "english"):
         raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
     return str(csinscTools.cloudResponse)
 
+################################################### Text to Speech API ###################################################
+def speak(text, languageTarget = "english"):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")
+    showSpinner()
+    try:
+        csinscTools.getTTS(text, languageTarget, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running TestAPI with param: " + param)        
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+    #return str(csinscTools.cloudResponse)
+
 ################################################### test API ###################################################
 def getTestAPI(param):
     if len(schoolID) == 0:

@@ -12,6 +12,8 @@ var $builtinmodule = function(name)
         $loc.black = new Sk.builtin.str("\u001b[ 38;2;0;0;0 m");
         $loc.white = new Sk.builtin.str("\u001b[ 38;2;255;255;255 m");
         $loc.grey = new Sk.builtin.str("\u001b[ 38;2;128;128;128 m");
+        $loc.lightGrey = new Sk.builtin.str("\u001b[ 38;2;192;192;192 m");
+        $loc.darkGrey = new Sk.builtin.str("\u001b[ 38;2;64;64;64 m");
         $loc.red = new Sk.builtin.str("\u001b[ 38;2;255;0;0 m");
         $loc.green = new Sk.builtin.str("\u001b[ 38;2;0;255;0 m");
         $loc.blue = new Sk.builtin.str("\u001b[ 38;2;0;0;255 m");
@@ -26,6 +28,8 @@ var $builtinmodule = function(name)
         $loc.black = new Sk.builtin.str("\u001b[ 48;2;0;0;0 m");
         $loc.white = new Sk.builtin.str("\u001b[ 48;2;255;255;255 m");
         $loc.grey = new Sk.builtin.str("\u001b[ 48;2;128;128;128 m");
+        $loc.lightGrey = new Sk.builtin.str("\u001b[ 48;2;192;192;192 m");
+        $loc.darkGrey = new Sk.builtin.str("\u001b[ 48;2;64;64;64 m");        
         $loc.red = new Sk.builtin.str("\u001b[ 48;2;255;0;0 m");
         $loc.green = new Sk.builtin.str("\u001b[ 48;2;0;255;0 m");
         $loc.blue = new Sk.builtin.str("\u001b[ 48;2;0;0;255 m");    
@@ -441,6 +445,57 @@ var $builtinmodule = function(name)
               mod.cloudResponse = response["response"];
               mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
               mod.cloudWaiting = false;
+            } 
+          } catch (error) {
+            mod.cloudWaiting = false;
+            mod.cloudStatus = Sk.ffi.remapToPy(408);
+            throw error;
+          }         
+        } else {
+          mod.cloudWaiting = false;
+          mod.cloudStatus = Sk.ffi.remapToPy(this.status);
+          throw "Web Service Error";
+        }
+      }
+    }       
+    xhr.send();   
+  });    
+
+
+  //////////////////////////////////////////// Text to Speech API ////////////////////////////////////////////
+  mod.getTTS = new Sk.builtin.func((text, language, school) => {      
+    mod.cloudWaiting = true;
+    mod.cloudResponse = "";
+    mod.cloudStatus = Sk.ffi.remapToPy(408);
+    var xhr = new XMLHttpRequest();      
+    const requestURL =  `${codestoreURL}tts?text=${text}&language=${language}&school=${school}`;
+    console.log(requestURL);
+    xhr.open("GET", requestURL, true);
+    xhr.setRequestHeader('Content-type', 'application/json');
+    xhr.timeout = 10000; // time in milliseconds
+    xhr.ontimeout = (e) => {
+      console.log("Timeout");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    };        
+    xhr.onerror = function() {
+      console.log("Error");
+      mod.cloudWaiting = false;
+      mod.cloudStatus = Sk.ffi.remapToPy(408);
+    }      
+    xhr.onreadystatechange = function() {
+      console.log("Response:" + xhr.responseText);       
+      if (this.readyState === XMLHttpRequest.DONE) {          
+        if (this.status === 200) {
+          try {
+            if (xhr.responseText.length > 0) {              
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.cloudResponse = response["response"];
+              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+              mod.cloudWaiting = false;
+              var audioData = new Uint8Array(mod.cloudResponse["data"]);
+              const blob = new Blob([audioData.buffer],{type:'audio/mp3'});
+              new Audio( URL.createObjectURL(blob) ).play()              
             } 
           } catch (error) {
             mod.cloudWaiting = false;
