@@ -7,8 +7,10 @@ class Colour:
     reset = "\u001b[ 0;2;0;0;0 m"
     red = "\u001b[ 38;2;255;0;0 m"
     black = "\u001b[ 38;2;0;0;0 m"
-    white = "\u001b[ 38;2;255;255;255 m"
+    white = "\u001b[ 38;2;255;255;255 m"    
     grey = "\u001b[ 38;2;128;128;128 m"
+    darkGrey = "\u001b[ 38;2;64;64;64 m"
+    lightGrey = "\u001b[ 38;2;192;192;192 m"
     red = "\u001b[ 38;2;255;0;0 m"
     green = "\u001b[ 38;2;0;255;0 m"
     blue = "\u001b[ 38;2;0;0;255 m"
@@ -18,12 +20,17 @@ class Colour:
     orange = "\u001b[ 38;2;255;165;0 m"
     purple = "\u001b[ 38;2;127;0;255 m"
     pink = "\u001b[ 38;2;255;192;203 m" 
+    violet = "\u001b[ 38;2;128;0;255 m" 
+    indigo = "\u001b[ 38;2;75;0;130 m"     
+    brown = "\u001b[ 38;2;150;75;0 m" 
 
 class Highlight:
     red = "\u001b[ 48;2;255;0;0 m"
     black = "\u001b[ 48;2;0;0;0 m"
     white = "\u001b[ 48;2;255;255;255 m"
     grey = "\u001b[ 48;2;128;128;128 m"
+    darkGrey = "\u001b[ 48;2;64;64;64 m"
+    lightGrey = "\u001b[ 48;2;192;192;192 m"   
     red = "\u001b[ 48;2;255;0;0 m"
     green = "\u001b[ 48;2;0;255;0 m"
     blue = "\u001b[ 48;2;0;0;255 m"
@@ -33,12 +40,17 @@ class Highlight:
     orange = "\u001b[ 48;2;255;165;0 m"
     purple = "\u001b[ 48;2;127;0;255 m"    
     pink = "\u001b[ 48;2;255;192;203 m" 
+    brown = "\u001b[ 48;2;150;75;0 m" 
+    violet = "\u001b[ 48;2;128;0;255 m" 
+    indigo = "\u001b[ 48;2;75;0;130 m" 
+    reset = "\u001b[ 48;2;0;0;0 m"
     
 class Style:
     bold = "\u001b[ 1;2;0;0;0 m"
     italics = "\u001b[ 3;2;0;0;0 m"
     underline = "\u001b[ 4;2;0;0;0 m"
     default = "\u001b[ 5;2;0;0;0 m"
+    reset = "\u001b[ 5;2;0;0;0 m"
 
 
 #schoolID = ""
@@ -224,6 +236,10 @@ def input_string(*args):
     return input(*args)
 
 ################################################### openAI API ###################################################
+# alias for getOpenAICompletion
+def getChatGPTAnswer(prompt):
+    return getOpenAICompletion(prompt)
+
 def getOpenAICompletion(prompt):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")       
@@ -243,6 +259,7 @@ def getOpenAICompletion(prompt):
     response = csinscTools.openAIResponse
     return str(response)
 
+# DALL.E api
 def getOpenAIImage(prompt):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")       
@@ -271,7 +288,7 @@ def getCloudVariable(name):
         csinscTools.getCloudVariable(name, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running TestAPI with param: " + param)           
+        raise Exception("Error running getCloudVariable with params: " + name)           
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()       
@@ -307,7 +324,7 @@ def setCloudVariable(name, value):
         csinscTools.setCloudVariable(name, value, typestring, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running TestAPI with param: " + param)            
+        raise Exception("Error running setCloudVariable with params: " + name + "," + value)            
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()      
@@ -326,7 +343,7 @@ def getTranslation(text, languageTarget = "english"):
         csinscTools.getTranslation(text, languageTarget, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running TestAPI with param: " + param)        
+        raise Exception("Error running getTranslation with params: " + text + "," + languageTarget)     
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()  
@@ -337,7 +354,13 @@ def getTranslation(text, languageTarget = "english"):
     return str(csinscTools.cloudResponse)
 
 ################################################### Text to Speech API ###################################################
+# this differs from the say() function in that it uses Google's TTS api - which allows
+# for the text to be spoken in different languages / dialects (say() will only say words in english, so will mangle
+# non english words, and skip Chinese characters altogether etc.)
+# TODO: allow for different selection of voices and genders etc. as additional arguments
 def speak(text, languageTarget = "english"):
+    if len(text) > 1024:
+        raise Exception("The text is too long, please try a shorter text (less than 1024 characters).")
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")
     showSpinner()
@@ -345,7 +368,7 @@ def speak(text, languageTarget = "english"):
         csinscTools.getTTS(text, languageTarget, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running TestAPI with param: " + param)        
+        raise Exception("Error running getTTS with params: " + text + "," + languageTarget)        
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()  
@@ -375,6 +398,7 @@ def getTestAPI(param):
     return str(csinscTools.cloudResponse)
 
 ################################################### webcam ###################################################
+# shows the web cam in a pop up frame
 def showWebCam():
     showSpinner()
     try:
@@ -387,6 +411,8 @@ def showWebCam():
     hideSpinner()    
     return
 
+# param is the URL of the image to predict
+# topK will return the top K matching classes
 def predictFromImage(param, topK = 1):
     showSpinner()
     try:
@@ -407,6 +433,7 @@ def predictFromImage(param, topK = 1):
         response = response[0]
     return response
 
+# will classify based on current streamed image from the webcam
 def predictFromWebCam(topK = 1):
     showSpinner()
     try:
@@ -426,6 +453,11 @@ def predictFromWebCam(topK = 1):
         response = response[0]
     return response
 
+# loads the image classification model generated by teachablemachine.withgoogle.com
+# url is the URL of the model uploaded to teachble machine site:
+#   e.g.: https://teachablemachine.withgoogle.com/models/QboebBm84/
+# if url is not specified, it will open up a file dialog allowing the user to
+# select the model files from their filesystem
 def loadImageModel(url = None):
     showSpinner()
     try:
@@ -438,6 +470,7 @@ def loadImageModel(url = None):
     hideSpinner()    
     return
 
+# shows the web cam embedded in the console output
 def printWebCam():
     showSpinner()
     try:
