@@ -216,7 +216,7 @@ var $builtinmodule = function(name)
 
     mod.setVolume = new Sk.builtin.func((volume) => {
       if (mod.audioElement !== null) {
-        mod.audioElement.volume = volume;
+        mod.audioElement.volume = volume.v;
       }
     });
 
@@ -226,7 +226,7 @@ var $builtinmodule = function(name)
     
     mod.playSound = new Sk.builtin.func((url, loop) => {
       mod.loadingSound = true;
-      createAudioElement(url, loop, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});                
+      mod.audioElement = createAudioElement(url, loop.v, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});                
     });
 
     mod.playFreeSoundOrg = new Sk.builtin.func((id) => {
