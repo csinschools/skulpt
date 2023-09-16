@@ -262,15 +262,27 @@ var $builtinmodule = function(name)
       }      
       xhr.onreadystatechange = function() {
         console.log("Response:" + xhr.responseText);        
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
-          if (xhr.responseText.length > 0) {
-            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
-            mod.openAIResponse = response["response"];
-            mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"]));                
+        if (this.readyState === XMLHttpRequest.DONE) {
+          if (this.status === 200) {          
+            if (xhr.responseText.length > 0) {
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.openAIResponse = response["response"];
+              mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"])); 
+              mod.openAIWaiting = false;               
+            }
+          } else if (this.status === 429) {
+            console.log("Error:" + this.readyState + "," + this.status);
+            mod.openAIResponse = new Sk.builtin.str("Accessing this getOpenAICompletion() too quickly. Please slow down your code using sleep() between API calls.");              
+            mod.openAIStatus = Sk.ffi.remapToPy(429);
+            mod.openAIWaiting = false;
+          } else {
+            console.log("Error:" + this.readyState + "," + this.status);
+            mod.openAIResponse = new Sk.builtin.str("Error trying to access the getOpenAICompletion() API.");              
+            mod.openAIStatus = Sk.ffi.remapToPy(408);
+            mod.openAIWaiting = false;          
           }
-          mod.openAIWaiting = false;
-        }
-      }       
+        }     
+      }  
       xhr.send();  
     });    
 
@@ -296,13 +308,25 @@ var $builtinmodule = function(name)
       }      
       xhr.onreadystatechange = function() {
         console.log("Response:" + xhr.responseText);        
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
-          if (xhr.responseText.length > 0) {
-            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
-            mod.openAIResponse = response["response"];
-            mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"]));                
-          }
-          mod.openAIWaiting = false;
+        if (this.readyState === XMLHttpRequest.DONE) {
+          if (this.status === 200) {          
+            if (xhr.responseText.length > 0) {
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.openAIResponse = response["response"];
+              mod.openAIStatus = Sk.ffi.remapToPy(parseInt(response["status"]));                
+              mod.openAIWaiting = false;
+            }
+          } else if (this.status === 429) {
+            console.log("Error:" + this.readyState + "," + this.status);
+            mod.openAIResponse = new Sk.builtin.str("Accessing this getOpenAIImage() too quickly. Please slow down your code using sleep() between API calls.");              
+            mod.openAIStatus = Sk.ffi.remapToPy(429);
+            mod.openAIWaiting = false;
+          } else {
+            console.log("Error:" + this.readyState + "," + this.status);
+            mod.openAIResponse = new Sk.builtin.str("Error trying to access the getOpenAIImage() API.");              
+            mod.openAIStatus = Sk.ffi.remapToPy(408);
+            mod.openAIWaiting = false;          
+          }          
         }
       }       
       xhr.send();    
@@ -378,7 +402,7 @@ var $builtinmodule = function(name)
         xhr.ontimeout = (e) => {
         console.log("Timeout");
         mod.cloudWaiting = false;
-        mod.cloudResponse = "Error trying to del  cloud variable " + name + ": timeout.";
+        mod.cloudResponse = "Error trying to del cloud variable " + name + ": timeout.";
         mod.cloudStatus = Sk.ffi.remapToPy(408);
       };       
       xhr.onerror = function() {
@@ -430,7 +454,13 @@ var $builtinmodule = function(name)
               if (xhr.responseText.length > 0) {
                 let response =  JSON.parse(xhr.responseText);               
                 response["value"] = decodeURIComponent(response["value"]);
-                mod.cloudResponse = Sk.ffi.remapToPy(response);                
+
+                // NOTE: response is handled differently in this API vs all the rest
+                // the reponse contains both the "value" and the "type" which is exposed
+                // to the python wrapper to cast the value into the type
+                // other APIs will simply just expose the response["response"] field and not the entire dict                
+                mod.cloudResponse = Sk.ffi.remapToPy(response);               
+                
                 mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
                 mod.cloudWaiting = false;
               } 
@@ -453,6 +483,7 @@ var $builtinmodule = function(name)
   });       
 
   //////////////////////////////////////////// Send SMS API ////////////////////////////////////////////
+  /*
   mod.sendsms = new Sk.builtin.func((number, message, school) => {
     var xhr = new XMLHttpRequest();      
     const requestURL =  `${codestoreURL}sendtext?number=${number}&msg=${message}&school=${school}`;
@@ -476,6 +507,7 @@ var $builtinmodule = function(name)
     }       
     xhr.send();               
   });  
+  */
 
   //////////////////////////////////////////// Translate API ////////////////////////////////////////////
   mod.getTranslation = new Sk.builtin.func((text, target, school) => {      
@@ -512,12 +544,19 @@ var $builtinmodule = function(name)
           } catch (error) {
             mod.cloudWaiting = false;
             mod.cloudStatus = Sk.ffi.remapToPy(408);
+            mod.cloudResponse = new Sk.builtin.str("Error with attempting to format the translated response from getTranslation():" + error); 
             throw error;
           }         
-        } else {
+        } else if (this.status === 429) {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Accessing getTranslation() too quickly. Please slow down your code using sleep() between getTranslation() calls.");              
+          mod.cloudStatus = Sk.ffi.remapToPy(429);
           mod.cloudWaiting = false;
-          mod.cloudStatus = Sk.ffi.remapToPy(this.status);
-          throw "Web Service Error";
+        } else {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Error trying to access getTranslation() API.");              
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          mod.cloudWaiting = false;
         }
       }
     }       
@@ -563,12 +602,19 @@ var $builtinmodule = function(name)
           } catch (error) {
             mod.cloudWaiting = false;
             mod.cloudStatus = Sk.ffi.remapToPy(408);
+            mod.cloudResponse = new Sk.builtin.str("Error with attempting to format the audio response from getTTS():" + error); 
             throw error;
           }         
-        } else {
+        } else if (this.status === 429) {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Accessing getTTS() too quickly. Please slow down your code using sleep() between getTTS() calls.");              
+          mod.cloudStatus = Sk.ffi.remapToPy(429);
           mod.cloudWaiting = false;
-          mod.cloudStatus = Sk.ffi.remapToPy(this.status);
-          throw "Web Service Error";
+        } else {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Error trying to access getTTS() API.");              
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          mod.cloudWaiting = false;
         }
       }
     }       

@@ -142,8 +142,10 @@ def listenWithText(text = ""):
     print(response)
     return response
         
+'''
 def sendsms(number, text):
     csinscTools.sendsms(number, text)    
+'''
 
 #### sound functions
 master_volume = 50
@@ -378,7 +380,7 @@ def getTranslation(text, languageTarget = "english"):
     if csinscTools.cloudStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.cloudStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+        raise Exception("There was an error using getTranslation(): " + str(csinscTools.cloudResponse))     
     return str(csinscTools.cloudResponse)
 
 ################################################### Text to Speech API ###################################################
@@ -403,7 +405,7 @@ def speak(text, languageTarget = "english"):
     if csinscTools.cloudStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.cloudStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+        raise Exception("There was an error using speak(): " + str(csinscTools.cloudResponse))     
     #return str(csinscTools.cloudResponse)
 
 ################################################### test API ###################################################
