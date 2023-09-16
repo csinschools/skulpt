@@ -283,6 +283,7 @@ def getOpenAIImage(prompt):
 def getCloudVariable(name):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")       
+    name = schoolID + "_" + name
     showSpinner()
     try:
         csinscTools.getCloudVariable(name, schoolID)
@@ -291,13 +292,13 @@ def getCloudVariable(name):
         raise Exception("Error running getCloudVariable with params: " + name)           
     while csinscTools.cloudWaiting:
         continue 
-    hideSpinner()       
+    hideSpinner()    
     if csinscTools.cloudStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.cloudStatus == 418:
         raise Exception("Variable: " + name + " doesn't exist as a cloud variable.")    
     elif csinscTools.cloudStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse["response"]))            
+        raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))            
     value = csinscTools.cloudResponse["value"]
     type = csinscTools.cloudResponse["type"]    
     response = None
@@ -309,10 +310,35 @@ def getCloudVariable(name):
         response = str(value) 
     return response         
 
+# FIXME: Not working due to tokenizer converting delCloudVariable(cloud_....) triggering on the argument cloud variable name
+def delCloudVariable(name):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")       
+    name = schoolID + "_" + name
+    showSpinner()
+    try:
+        csinscTools.delCloudVariable(name, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running delCloudVariable with params: " + name)           
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()       
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus == 418:
+        raise Exception("Variable: " + name + " doesn't exist as a cloud variable.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))  
+    return str(csinscTools.cloudResponse)          
+
 
 def setCloudVariable(name, value):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")    
+    if name[:12] == "cloud_const_":
+        raise Exception("Cannot set the value of a constant cloud variable")  
+    name = schoolID + "_" + name
     showSpinner()
     inputstring = str(type(value))
     typestring = inputstring.split("'")[1::2]
@@ -324,14 +350,16 @@ def setCloudVariable(name, value):
         csinscTools.setCloudVariable(name, value, typestring, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running setCloudVariable with params: " + name + "," + value)            
+        #raise Exception("Error running setCloudVariable with params: " + name + "," + value)            
+        raise Exception(str(csinscTools.cloudResponse))
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()      
     if csinscTools.cloudStatus == 403:
-        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+        raise Exception(str(csinscTools.cloudResponse))
+        #raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.cloudStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))        
+        raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))  
     return str(csinscTools.cloudResponse)      
     
 ################################################### Translate API ###################################################
@@ -482,6 +510,12 @@ def printWebCam():
         continue 
     hideSpinner()    
     return    
+
+def getWebCamImage():    
+    try:
+        return str(csinscTools.getWebCamImage())
+    except Exception as e:
+        raise Exception("Error attempting to retrieve image from the webcam")               
 
 def pauseWebCam():
     showSpinner()

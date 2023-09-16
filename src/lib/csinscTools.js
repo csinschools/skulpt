@@ -339,6 +339,56 @@ var $builtinmodule = function(name)
       }      
       xhr.onreadystatechange = function() {
         console.log("Response:" + xhr.responseText);        
+        if (this.readyState === XMLHttpRequest.DONE) {
+          if (this.status === 200) {          
+            if (xhr.responseText.length > 0) {
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.cloudResponse = response["response"];
+              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+              mod.cloudWaiting = false;
+            }
+          } else if (this.status === 429) {
+              console.log("Error:" + this.readyState + "," + this.status);
+              mod.cloudResponse = new Sk.builtin.str("Accessing cloud variables too quickly. Please slow down your code using sleep() between cloud variables.");              
+              mod.cloudStatus = Sk.ffi.remapToPy(429);
+              mod.cloudWaiting = false;
+          } else {
+              console.log("Error:" + this.readyState + "," + this.status);
+              mod.cloudResponse = new Sk.builtin.str("Error trying to set cloud variable " + name + ": problems with accessing the API.");              
+              mod.cloudStatus = Sk.ffi.remapToPy(408);
+              mod.cloudWaiting = false;
+          }          
+        } 
+      }
+      xhr.send();   
+    }); 
+
+    mod.delCloudVariable = new Sk.builtin.func((name, school) => {
+      value = encodeURIComponent(value)      
+      console.log("Attempting to del cloud variable:" + name);
+      mod.cloudWaiting = true;
+      mod.cloudResponse = "";
+      mod.cloudStatus = 0;
+      var xhr = new XMLHttpRequest();      
+      const requestURL =  `${codestoreURL}cloudvars/del?name=${name}&school=${school}`;//`https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
+      console.log(requestURL);
+      xhr.open("GET", requestURL, true);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.timeout = 10000; // time in milliseconds
+        xhr.ontimeout = (e) => {
+        console.log("Timeout");
+        mod.cloudWaiting = false;
+        mod.cloudResponse = "Error trying to del  cloud variable " + name + ": timeout.";
+        mod.cloudStatus = Sk.ffi.remapToPy(408);
+      };       
+      xhr.onerror = function() {
+        console.log("Error");
+        mod.cloudWaiting = false;
+        mod.cloudResponse = "Error trying to del cloud variable " + name + ": problems with accessing the API.";
+        mod.cloudStatus = Sk.ffi.remapToPy(408);
+      }      
+      xhr.onreadystatechange = function() {
+        console.log("Response:" + xhr.responseText);        
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
           if (xhr.responseText.length > 0) {
             const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
@@ -349,7 +399,7 @@ var $builtinmodule = function(name)
         } 
       }
       xhr.send();   
-    }); 
+    });     
 
     mod.getCloudVariable = new Sk.builtin.func((name, school) => {      
         mod.cloudWaiting = true;
@@ -375,14 +425,27 @@ var $builtinmodule = function(name)
         }        
         xhr.onreadystatechange = function() {
           console.log("Response:" + xhr.responseText);          
-          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {            
-            if (xhr.responseText.length > 0) {
-              let response =  JSON.parse(xhr.responseText);               
-              response["value"] = decodeURIComponent(response["value"]);
-              mod.cloudResponse = Sk.ffi.remapToPy(response);                
-              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+          if (this.readyState === XMLHttpRequest.DONE) {
+            if (this.status === 200) {            
+              if (xhr.responseText.length > 0) {
+                let response =  JSON.parse(xhr.responseText);               
+                response["value"] = decodeURIComponent(response["value"]);
+                mod.cloudResponse = Sk.ffi.remapToPy(response);                
+                mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+                mod.cloudWaiting = false;
+              } 
+            } else if (this.status === 429) {
+              console.log("Error:" + this.readyState + "," + this.status);
+              mod.cloudResponse = new Sk.builtin.str("Accessing cloud variables too quickly. Please slow down your code using sleep() between cloud variables.");              
+              mod.cloudStatus = Sk.ffi.remapToPy(429);
               mod.cloudWaiting = false;
-            } 
+            } else {
+              console.log("Error:" + this.readyState + "," + this.status);
+              mod.cloudResponse = new Sk.builtin.str("Error trying to set cloud variable " + name + ": problems with accessing the API.");              
+              mod.cloudStatus = Sk.ffi.remapToPy(408);
+              mod.cloudWaiting = false;
+            }
+
           }
         }         
         xhr.send();   
@@ -572,6 +635,10 @@ var $builtinmodule = function(name)
     await printWebCam();
     mod.webcamWaiting = false;
   });  
+
+  mod.getWebCamImage = new Sk.builtin.func(() => { 
+    return getImageFromWebCam();
+  });    
 
   async function tmImageDialogBtnPressed() {   
       // you need to create File objects, like with file input elements (<input type="file" ...>)
