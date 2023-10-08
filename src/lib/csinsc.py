@@ -257,9 +257,10 @@ def getOpenAICompletion(prompt):
     if csinscTools.openAIStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.openAIStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))                     
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.openAIResponse))                     
     response = csinscTools.openAIResponse
-    return str(response)
+    # TODO: find a better way to include the 'truncation' text - as it is mixing presentation with content
+    return str(response).strip() + Colour.blue + " (... response may be truncated)" + Colour.reset
 
 # DALL.E api
 def getOpenAIImage(prompt):
@@ -277,7 +278,7 @@ def getOpenAIImage(prompt):
     if csinscTools.openAIStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.openAIStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.cloudResponse))                   
+        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.openAIResponse))                   
     response = csinscTools.openAIResponse
     return str(response)
 
@@ -334,12 +335,21 @@ def delCloudVariable(name):
         raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))  
     return str(csinscTools.cloudResponse)          
 
+def cloudconst(value):
+    return (1, value)
 
 def setCloudVariable(name, value):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")    
     if name[:12] == "cloud_const_":
-        raise Exception("Cannot set the value of a constant cloud variable")  
+        try:
+            # 1: overwrite const
+            if value[0] == 1:
+                value = value[1]
+            else:
+                raise Exception("Cannot set the value of a constant cloud variable")  
+        except Exception as e:
+            raise Exception("Cannot set the value of a constant cloud variable")  
     name = schoolID + "_" + name
     showSpinner()
     inputstring = str(type(value))
