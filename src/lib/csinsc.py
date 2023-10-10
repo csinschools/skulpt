@@ -303,7 +303,12 @@ def getCloudVariable(name):
     elif csinscTools.cloudStatus != 200:
         raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))            
     value = csinscTools.cloudResponse["value"]
-    type = csinscTools.cloudResponse["type"]    
+    type = csinscTools.cloudResponse["type"]  
+
+    # discard const'ness for reading
+    if type[:6] == "const ":
+        type = type[6:]
+
     response = None
     if type == "int":
         response = int(value)
@@ -323,7 +328,7 @@ def delCloudVariable(name):
         csinscTools.delCloudVariable(name, schoolID)
     except Exception as e:
         hideSpinner() 
-        raise Exception("Error running delCloudVariable with params: " + name)           
+        raise Exception("Error running delCloudVariable with params: " + name + ", error: " + str(e))
     while csinscTools.cloudWaiting:
         continue 
     hideSpinner()       
@@ -335,19 +340,25 @@ def delCloudVariable(name):
         raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))  
     return str(csinscTools.cloudResponse)          
 
+# reformat value for setCloudVariable() to indicate const_type = 1 (const)
 def cloudconst(value):
-    return (1, value)
+    return [1, value]
+# reformat value for setCloudVariable() to indicate const_type = 2 (force back to non-const)
+def cloudfree(value):
+    return [2, value]
+def clouddel(variable):
+    delCloudVariable(variable)
 
 def setCloudVariable(name, value):
+    const_type = 0
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")    
-    if name[:12] == "cloud_const_":
+    # checking if the value is a const
+    if (type(value) == list):
         try:
             # 1: overwrite const
-            if value[0] == 1:
-                value = value[1]
-            else:
-                raise Exception("Cannot set the value of a constant cloud variable")  
+            const_type = value[0]
+            value = value[1]
         except Exception as e:
             raise Exception("Cannot set the value of a constant cloud variable")  
     name = schoolID + "_" + name
@@ -359,7 +370,7 @@ def setCloudVariable(name, value):
     else:
         typestring = typestring[0]
     try:
-        csinscTools.setCloudVariable(name, value, typestring, schoolID)
+        csinscTools.setCloudVariable(name, value, typestring, const_type, schoolID)
     except Exception as e:
         hideSpinner() 
         #raise Exception("Error running setCloudVariable with params: " + name + "," + value)            

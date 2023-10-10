@@ -337,14 +337,14 @@ var $builtinmodule = function(name)
     mod.cloudResponse = "";
     mod.cloudStatus = 0;
 
-    mod.setCloudVariable = new Sk.builtin.func((name, value, type, school) => {
+    mod.setCloudVariable = new Sk.builtin.func((name, value, type, const_type, school) => {
       value = encodeURIComponent(value)      
       console.log("Attempting to set cloud variable:" + name + " as:" + value);
       mod.cloudWaiting = true;
       mod.cloudResponse = "";
       mod.cloudStatus = 0;
       var xhr = new XMLHttpRequest();      
-      const requestURL =  `${codestoreURL}cloudvars/put?name=${name}&val=${value}&type=${type}&school=${school}`;//`https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
+      const requestURL =  `${codestoreURL}cloudvars/put?name=${name}&val=${value}&type=${type}&school=${school}&const_type=${const_type}`;//`https://codestore-348206.ts.r.appspot.com/cloudvars/put?name=${name}&val=${value}&type=${type}`
       console.log(requestURL);
       xhr.open("GET", requestURL, true);
       xhr.setRequestHeader('Content-type', 'application/json');
@@ -388,7 +388,6 @@ var $builtinmodule = function(name)
     }); 
 
     mod.delCloudVariable = new Sk.builtin.func((name, school) => {
-      value = encodeURIComponent(value)      
       console.log("Attempting to del cloud variable:" + name);
       mod.cloudWaiting = true;
       mod.cloudResponse = "";
