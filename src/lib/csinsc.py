@@ -334,10 +334,13 @@ def delCloudVariable(name):
     hideSpinner()       
     if csinscTools.cloudStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
-    elif csinscTools.cloudStatus == 418:
-        raise Exception("Variable: " + name + " doesn't exist as a cloud variable.")    
+    elif csinscTools.cloudStatus == 418: 
+        # ignoring deleting non-existant cloud variables for now
+        # raise Exception("Variable: " + name + " doesn't exist as a cloud variable.")            
+        pass
     elif csinscTools.cloudStatus != 200:
         raise Exception("There was an error using cloud variables: " + str(csinscTools.cloudResponse))  
+    
     return str(csinscTools.cloudResponse)          
 
 # reformat value for setCloudVariable() to indicate const_type = 1 (const)
