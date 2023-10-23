@@ -2,6 +2,9 @@ var $builtinmodule = function (name) {
 "use strict";
 
 function getConfiguredTarget() {
+    // add canvas to editor
+    Sk.builtins.showTurtle();
+
     var selector, target;
 
     selector = (Sk.TurtleGraphics && Sk.TurtleGraphics.target) || "turtle",
@@ -2290,6 +2293,7 @@ function generateTurtleModule(_target) {
 
     function initTurtle(self, shape) {
         Sk.builtin.pyCheckArgs("__init__", arguments, 2, 3, false, false);
+
         self.instance = new Turtle(shape);
         self.instance.skInstance = self;
     }
