@@ -215,10 +215,14 @@ def floatInput(*args):
 def numInput(*args):
     result = None
     while result is None:
+        result = input(*args);
         try:
-            result = float(input(*args))
+            result = int(result)
         except ValueError as ve:
-            print("Incorrect format: expected a number. Please try again.")
+            try:
+                result = float(result)
+            except ValueError as ve:
+                print("Incorrect format: expected a number. Please try again.")
     return result    
 
 # just an alias for input(), but consistent with intInput() and floatInput() above
@@ -226,13 +230,23 @@ def strInput(*args):
     return input(*args)
 
 # aliases for above
+def inputInteger(*args):
+    return intInput(*args)
+def inputInt(*args):
+    return intInput(*args)
 def input_integer(*args):
     return intInput(*args)
 def input_float(*args):
     return floatInput(*args)
+def inputFloat(*args):
+    return floatInput(*args)
 def input_number(*args):
     return numInput(*args)
 def input_num(*args):
+    return numInput(*args)
+def inputNumber(*args):
+    return numInput(*args)
+def inputNum(*args):
     return numInput(*args)
 def input_string(*args):
     return input(*args)
@@ -448,7 +462,7 @@ def getTestAPI(param):
     if csinscTools.cloudStatus == 403:
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.cloudStatus != 200:
-        raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support.")    
+        raise Exception("There was an error using getTestAPI(): " + str(csinscTools.cloudResponse))       
     return str(csinscTools.cloudResponse)
 
 ################################################### webcam ###################################################

@@ -643,18 +643,30 @@ var $builtinmodule = function(name)
     }      
     xhr.onreadystatechange = function() {
       console.log("Response:" + xhr.responseText);       
-      if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {          
-        try {
-          if (xhr.responseText.length > 0) {              
-            const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
-            mod.cloudResponse = response["response"];
-            mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+      if (this.readyState === XMLHttpRequest.DONE) {   
+        if (this.status === 200) {
+          try {
+            if (xhr.responseText.length > 0) {              
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              mod.cloudResponse = response["response"];
+              mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+              mod.cloudWaiting = false;
+            } 
+          } catch (error) {
             mod.cloudWaiting = false;
-          } 
-        } catch (error) {
+            mod.cloudStatus = Sk.ffi.remapToPy(408);
+            throw error;
+          }
+        } else if (this.status === 429) {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Accessing getTestAPI() too quickly. Please slow down your code using sleep() between getTestAPI() calls.");              
+          mod.cloudStatus = Sk.ffi.remapToPy(429);
           mod.cloudWaiting = false;
+        } else {
+          console.log("Error:" + this.readyState + "," + this.status);
+          mod.cloudResponse = new Sk.builtin.str("Error trying to access getTestAPI() API.");              
           mod.cloudStatus = Sk.ffi.remapToPy(408);
-          throw error;
+          mod.cloudWaiting = false;
         }
       }
     }       
