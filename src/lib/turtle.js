@@ -28,8 +28,8 @@ function generateTurtleModule(_target) {
         Types                = {},
         _defaultSetup        = {
             target     : "turtle", // DOM element or id of parent container
-            width      : 400, // if set to 0 it will use the target width
-            height     : 400, // if set to 0 it will use the target height
+            width      : 500, // if set to 0 it will use the target width
+            height     : 500, // if set to 0 it will use the target height
             worldWidth : 0, // if set to 0 it will use config.width
             worldHeight: 0, // if set to 0 it will use config.height
             animate    : true, // enabled/disable all animated rendering
@@ -2300,7 +2300,7 @@ function generateTurtleModule(_target) {
     initTurtle.co_varnames = ["self", "shape"];
     initTurtle.co_name = new Sk.builtin.str("Turtle");
     initTurtle.co_argcount = 2;
-    initTurtle.$defaults = [Sk.builtin.none.none$, new Sk.builtin.str("classic")];
+    initTurtle.$defaults = [Sk.builtin.none.none$, new Sk.builtin.str("turtle")];
 
     function TurtleWrapper($gbl, $loc) {
         $loc.__init__ = new Sk.builtin.func(initTurtle);

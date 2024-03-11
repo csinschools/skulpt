@@ -672,6 +672,177 @@ var $builtinmodule = function(name)
     }       
     xhr.send();   
   });        
+
+  //////////////////////////////////////////// Teachable Machines Pose Model ////////////////////////////////////////////  
+  mod.poseModelWaiting = false;
+  mod.poseModelResponse = "";
+  mod.tmPoseModel = null;
+  mod.tmPoseData = null;
+  mod.poseModelStatus = Sk.ffi.remapToPy(0);  
+
+  mod.loadPoseModel = new Sk.builtin.func(async (url) => {
+    mod.poseModelWaiting = true;
+    if (url.v === null) {
+      document.getElementById("tmImageDialogOKBtn").removeEventListener("click", tmImageDialogBtnPressed);
+      document.getElementById("tmImageDialogOKBtn").addEventListener("click", tmImageDialogBtnPressed);
+      await loadImageModel();    
+    } else {
+      modelurl = url.v;
+      if (modelurl.slice(-1) !== "/") {
+        modelurl = modelurl +  "/";
+      }
+      mod.tmPoseModel = await tmPose.load(modelurl + "model.json", modelurl + "metadata.json");  
+      mod.poseModelWaiting = false; 
+    }    
+  });
+
+  mod.predictPoseFromWebCam = new Sk.builtin.func(async (topK) => {
+    mod.poseModelWaiting = true;
+    mod.poseModelStatus = Sk.ffi.remapToPy(0);
+    if (Sk.ffi.remapToJs(topK) == -1) {
+      topK = mod.tmPoseModel.getTotalClasses();
+    }    
+    canvas = getWebCamCanvas();
+    if (canvas === null) {
+      mod.poseModelWaiting = false;
+      mod.poseModelStatus = Sk.ffi.remapToPy(1);
+      mod.poseModelResponse = new Sk.builtin.str("WebCam not set up.");           
+      throw "WebCam not set up."        
+    }     
+    try {     
+      await tmPosePredict(canvas, topK);
+    } catch (error) {
+      mod.poseModelWaiting = false;
+      mod.poseModelStatus = Sk.ffi.remapToPy(1);
+      mod.poseModelResponse = new Sk.builtin.str("Error with predicting pose from webcam.");      
+      throw error;
+    }
+  });   
+
+  mod.drawPoseSkeleton = async () => {
+    let src = getWebCamCanvas();
+    let ctx = src.getContext("2d");
+    ctx.drawImage(src, 0, 0);
+    if (mod.tmPoseData) {
+      console.log(mod.tmPoseData);
+      const minPartConfidence = 0.5;
+      tmPose.drawKeypoints(mod.tmPoseData.keypoints, minPartConfidence, ctx);
+      tmPose.drawSkeleton(mod.tmPoseData.keypoints, minPartConfidence, ctx);
+    }
+  };
+
+  async function tmPosePredict(src, topK) {
+    try {
+    // Prediction #1: run input through posenet
+    // estimatePose can take in an image, video or canvas html element      
+      const {pose, posenetOutput} = await mod.tmPoseModel.estimatePose(src);
+      mod.tmPoseData = pose;
+      // Prediction 2: run input through teachable machine classification model
+      const prediction = await mod.tmPoseModel.predict(posenetOutput);
+
+      let response =[];
+      for (let i = 0; i < topK; i++) {
+        response.push([new Sk.builtin.str(prediction[i].className), new Sk.builtin.float_(prediction[i].probability.toFixed(2))]);
+      }    
+
+      console.log(topK);
+      console.log(response);
+
+      mod.poseModelResponse = Sk.ffi.remapToPy(response);
+      mod.poseModelWaiting = false;
+    } catch (error) {
+      throw error;
+    }
+  }  
+
+  //////////////////////////////////////////// Teachable Machines Audio Model ////////////////////////////////////////////
+  mod.audioModelWaiting = false;
+  mod.audioModelResponse = "";
+  mod.tmAudioModel = null;
+  mod.audioModelStatus = Sk.ffi.remapToPy(0);  
+  mod.loadAudioModel = new Sk.builtin.func(async (url) => {
+    mod.audioModelWaiting = true;
+    if (url.v === null) {
+      document.getElementById("tmImageDialogOKBtn").removeEventListener("click", tmImageDialogBtnPressed);
+      document.getElementById("tmImageDialogOKBtn").addEventListener("click", tmImageDialogBtnPressed);
+      await loadImageModel();    
+    } else {
+      modelurl = url.v;
+      if (modelurl.slice(-1) !== "/") {
+        modelurl = modelurl +  "/";
+      }
+      mod.tmAudioModel = speechCommands.create(
+          'BROWSER_FFT', // fourier transform type, not useful to change
+          undefined, // speech commands vocabulary feature, not useful for your models
+          modelurl + "model.json",
+          modelurl + "metadata.json");
+
+      // check that model and metadata are loaded via HTTPS requests.
+      await mod.tmAudioModel.ensureModelLoaded();
+
+      mod.audioModelWaiting = false; 
+    }
+  });  
+
+  mod.predictFromMicrophone = new Sk.builtin.func(async () => {
+    mod.audioModelWaiting = true;
+    mod.audioModelStatus = Sk.ffi.remapToPy(0);
+    try {
+      const classLabels = mod.tmAudioModel.wordLabels(); // get class labels
+
+      // listen() takes two arguments:
+      // 1. A callback function that is invoked anytime a word is recognized.
+      // 2. A configuration object with adjustable fields
+      mod.tmAudioModel.listen(result => {
+          const scores = result.scores; // probability of prediction for each class
+          let response =[];
+          let maxScore = 0;
+          let maxClass = 0;
+          // render the probability scores per class
+
+          for (let i = 0; i < classLabels.length; i++) {
+            if (result.scores[i] > maxScore) {
+              maxScore = result.scores[i];
+              maxClass = i;
+            }
+            response.push([new Sk.builtin.str(classLabels[i]), new Sk.builtin.float_(result.scores[i].toFixed(2))]);
+          }
+
+          // check if background noise was detected
+          // assume that the background noise class is the last one (which is currently in TeachableMachines)
+          // update: already addressed in invokeCallbackOnNoiseAndUnknown setting
+          /*
+          if (maxClass == classLabels.length - 1) {
+            // if so then return from callback but keep listening
+            return;
+          } else {
+            */
+            mod.audioModelResponse = Sk.ffi.remapToPy(response);
+            mod.audioModelWaiting = false;   
+            mod.tmAudioModel.stopListening();     
+          /*}*/
+      }, {
+          includeSpectrogram: true, // in case listen should return result.spectrogram
+          probabilityThreshold: 0.5,
+          invokeCallbackOnNoiseAndUnknown: false,
+          overlapFactor: 0.50 // probably want between 0.5 and 0.75. More info in README
+      });
+    } catch (error) {
+      mod.audioModelWaiting = false;
+      mod.audioModelStatus = Sk.ffi.remapToPy(1);
+      mod.audioModelResponse = new Sk.builtin.str("Error with audio prediction.");
+      throw error;
+    }
+
+    // Stop the recognition in 5 seconds.
+    //setTimeout(() => mod.tmAudioModel.stopListening(), 5000);    
+  });
+
+  mod.stopAudioPrediction = new Sk.builtin.func( () => {
+    if (mod.tmAudioModel != null) {
+      mod.tmAudioModel.stopListening();
+    }
+  });
   
   //////////////////////////////////////////// Web Cam ////////////////////////////////////////////
   mod.webcamWaiting = false;

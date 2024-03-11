@@ -465,6 +465,86 @@ def getTestAPI(param):
         raise Exception("There was an error using getTestAPI(): " + str(csinscTools.cloudResponse))       
     return str(csinscTools.cloudResponse)
 
+################################################### teachable machine pose model ###################################################
+def loadPoseModel(url = None):
+    showSpinner()
+    try:
+        csinscTools.loadPoseModel(url)
+        setWebCamCallback(csinscTools.drawPoseSkeleton)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to load the audio model")        
+    while csinscTools.poseModelWaiting:
+        continue 
+    hideSpinner()    
+    return
+
+# will classify based on current streamed image from the webcam
+def predictPoseFromWebCam(showAll = False, topK = -1):
+    showSpinner()
+    try:
+        # todo: branch depending of para datatype
+        csinscTools.predictPoseFromWebCam(topK)
+     
+        while csinscTools.poseModelWaiting:
+            continue 
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to predict pose from webcam stream")           
+    hideSpinner()    
+    if csinscTools.poseModelStatus != 0:
+        raise Exception(str(csinscTools.poseModelResponse))
+    
+    response = csinscTools.poseModelResponse
+    if showAll:
+        return response
+    else:
+        maxProb = 0
+        maxClass = ""
+        for r in response:
+            if r[1] > maxProb:
+                maxClass = r[0]
+                maxProb = r[1]
+        return maxClass
+
+################################################### teachable machine audio model ###################################################
+def loadAudioModel(url = None):
+    showSpinner()
+    try:
+        csinscTools.loadAudioModel(url)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to load the audio model")        
+    while csinscTools.audioModelWaiting:
+        continue 
+    hideSpinner()    
+    return
+
+# will classify based on current streamed image from the webcam
+def predictFromAudio(topK = 1):
+    showSpinner()
+    try:
+        # todo: branch depending of para datatype
+        csinscTools.predictFromMicrophone()
+     
+        while csinscTools.audioModelWaiting:
+            continue 
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to predict from audio stream")           
+    hideSpinner()    
+    if csinscTools.audioModelStatus != 0:
+        raise Exception(str(csinscTools.audioModelResponse))
+    response = csinscTools.audioModelResponse
+    # only return the max probability label
+    maxProb = 0
+    maxResponse = None
+    for r in response:
+        if r[1] > maxProb:
+            maxProb = r[1]
+            maxResponse = r[0]
+    return maxResponse
+
 ################################################### webcam ###################################################
 # shows the web cam in a pop up frame
 def showWebCam():
