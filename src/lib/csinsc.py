@@ -421,6 +421,44 @@ def getTranslation(text, languageTarget = "english"):
         raise Exception("There was an error using getTranslation(): " + str(csinscTools.cloudResponse))     
     return str(csinscTools.cloudResponse)
 
+################################################### Weather API ###################################################
+def getWeather(location):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")
+    showSpinner()
+    try:
+        csinscTools.getWeather(location, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running getWeather with params: " + location);     
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error using getTranslation(): " + str(csinscTools.cloudResponse))     
+    return (csinscTools.cloudResponse)
+
+def getWeatherTemp(location):
+    if len(schoolID) == 0:
+        raise Exception("School ID not set. Please set it using the function setSchool().")
+    showSpinner()
+    try:
+        csinscTools.getWeather(location, schoolID)
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error running getWeather with params: " + location);     
+    while csinscTools.cloudWaiting:
+        continue 
+    hideSpinner()  
+    if csinscTools.cloudStatus == 403:
+        raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
+    elif csinscTools.cloudStatus != 200:
+        raise Exception("There was an error using getTranslation(): " + str(csinscTools.cloudResponse))     
+    response = csinscTools.cloudResponse
+    return float(response["current"]["temp_c"])
+
 ################################################### Text to Speech API ###################################################
 # this differs from the say() function in that it uses Google's TTS api - which allows
 # for the text to be spoken in different languages / dialects (say() will only say words in english, so will mangle

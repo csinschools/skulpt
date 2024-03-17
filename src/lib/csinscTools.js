@@ -124,10 +124,21 @@ var $builtinmodule = function(name)
       return new Sk.builtin.bool(mod.synth.speaking);
     });    
 
-    const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
-    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+
+    var SpeechRecognition = null;
+    var SpeechRecognitionEvent = null;
+    try {
+      SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+      SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+    }
+    catch(err) {
+    }
 
     mod.startListen = new Sk.builtin.func(() => {
+
+      if (SpeechRecognition === null) {
+        throw "SpeechRecognition not supported. Please check that you are using the Google Chrome browser."     
+      }
       mod.recognition = new SpeechRecognition();  
 
       mod.listening = true;
@@ -619,6 +630,61 @@ var $builtinmodule = function(name)
     }       
     xhr.send();   
   });    
+
+//////////////////////////////////////////// Weather API ////////////////////////////////////////////
+mod.getWeather = new Sk.builtin.func((location, school) => {      
+  mod.cloudWaiting = true;
+  mod.cloudResponse = "";
+  mod.cloudStatus = Sk.ffi.remapToPy(408);
+  var xhr = new XMLHttpRequest();      
+  const requestURL =  `${codestoreURL}weather?location=${location}&school=${school}`;
+  console.log(requestURL);
+  xhr.open("GET", requestURL, true);
+  xhr.setRequestHeader('Content-type', 'application/json');
+  xhr.timeout = 10000; // time in milliseconds
+  xhr.ontimeout = (e) => {
+    console.log("Timeout");
+    mod.cloudWaiting = false;
+    mod.cloudStatus = Sk.ffi.remapToPy(408);
+  };        
+  xhr.onerror = function() {
+    console.log("Error");
+    mod.cloudWaiting = false;
+    mod.cloudStatus = Sk.ffi.remapToPy(408);
+  }      
+  xhr.onreadystatechange = function() {
+    console.log("Response:" + xhr.responseText);       
+    if (this.readyState === XMLHttpRequest.DONE) {          
+      if (this.status === 200) {
+        try {
+          if (xhr.responseText.length > 0) {              
+            const response =  JSON.parse(xhr.responseText);
+
+            mod.cloudResponse = Sk.ffi.remapToPy(response["response"]);
+            mod.cloudStatus = Sk.ffi.remapToPy(parseInt(response["status"]));
+            mod.cloudWaiting = false;       
+          } 
+        } catch (error) {
+          mod.cloudWaiting = false;
+          mod.cloudStatus = Sk.ffi.remapToPy(408);
+          mod.cloudResponse = new Sk.builtin.str("Error with attempting to format the translated response from getWeather():" + error); 
+          throw error;
+        }         
+      } else if (this.status === 429) {
+        console.log("Error:" + this.readyState + "," + this.status);
+        mod.cloudResponse = new Sk.builtin.str("Accessing getWeather() too quickly. Please slow down your code using sleep() between getWeather() calls.");              
+        mod.cloudStatus = Sk.ffi.remapToPy(429);
+        mod.cloudWaiting = false;
+      } else {
+        console.log("Error:" + this.readyState + "," + this.status);
+        mod.cloudResponse = new Sk.builtin.str("Error trying to access getWeather() API.");              
+        mod.cloudStatus = Sk.ffi.remapToPy(408);
+        mod.cloudWaiting = false;
+      }
+    }
+  }       
+  xhr.send();   
+});      
   //////////////////////////////////////////// Test API ////////////////////////////////////////////
 
   mod.getTestAPI = new Sk.builtin.func((param, school) => {      
