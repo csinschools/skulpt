@@ -1,5 +1,5 @@
-var codestoreURL = "https://codestore-348206.ts.r.appspot.com/";
-//var codestoreURL = "http://localhost:3000/";
+// Sk.builtins.webServiceURL should be set in the editor or as a python variable
+var codestoreURL = Sk.builtins.webServiceURL.v;
 
 var $builtinmodule = function(name)
 {
@@ -233,6 +233,14 @@ var $builtinmodule = function(name)
 
     mod.stopSound = new Sk.builtin.func(() => {
       stopSound();
+    });
+
+    mod.getSoundCurrentTime = new Sk.builtin.func(() => {
+      if (mod.audioElement !== null) {
+        return Sk.ffi.remapToPy(mod.audioElement.currentTime);
+      } else {
+        return Sk.ffi.remapToPy(-1);
+      }
     });
     
     mod.playSound = new Sk.builtin.func((url, loop) => {
@@ -811,6 +819,12 @@ mod.getWeather = new Sk.builtin.func((location, school) => {
         response.push([new Sk.builtin.str(prediction[i].className), new Sk.builtin.float_(prediction[i].probability.toFixed(2))]);
       }    
 
+      if (mod.tmPoseData) {
+        response.push([mod.tmPoseData.keypoints]);
+      } else {
+        response.push([]);
+      }
+
       console.log(topK);
       console.log(response);
 
@@ -867,31 +881,31 @@ mod.getWeather = new Sk.builtin.func((location, school) => {
           // render the probability scores per class
 
           for (let i = 0; i < classLabels.length; i++) {
+            
             if (result.scores[i] > maxScore) {
               maxScore = result.scores[i];
               maxClass = i;
-            }
-            response.push([new Sk.builtin.str(classLabels[i]), new Sk.builtin.float_(result.scores[i].toFixed(2))]);
+            }                    
+            response.push([new Sk.builtin.str(classLabels[i]), new Sk.builtin.float_(result.scores[i].toFixed(2))]);    
           }
-
+          
           // check if background noise was detected
           // assume that the background noise class is the last one (which is currently in TeachableMachines)
-          // update: already addressed in invokeCallbackOnNoiseAndUnknown setting
-          /*
-          if (maxClass == classLabels.length - 1) {
+          // update: already addressed in invokeCallbackOnNoiseAndUnknown setting          
+          // update to update: does not seem to be working anymore??          
+          if (classLabels[maxClass].toLowerCase().includes("background") || classLabels[maxClass].toLowerCase().includes("noise")) {
             // if so then return from callback but keep listening
             return;
-          } else {
-            */
+          } else {            
             mod.audioModelResponse = Sk.ffi.remapToPy(response);
             mod.audioModelWaiting = false;   
             mod.tmAudioModel.stopListening();     
-          /*}*/
+          }
       }, {
           includeSpectrogram: true, // in case listen should return result.spectrogram
           probabilityThreshold: 0.5,
           invokeCallbackOnNoiseAndUnknown: false,
-          overlapFactor: 0.50 // probably want between 0.5 and 0.75. More info in README
+          overlapFactor: 0.5 // probably want between 0.5 and 0.75. More info in README
       });
     } catch (error) {
       mod.audioModelWaiting = false;
@@ -1031,9 +1045,6 @@ mod.getWeather = new Sk.builtin.func((location, school) => {
       throw error;
     }
   }
-  
-  
-
   //////////////////////////////////////////// Lanugages Mapping ////////////////////////////////////////////
    
   var languages = {

@@ -163,6 +163,9 @@ def playSound(url, loop = False):
         continue 
     setVolume(master_volume)
 
+def getSoundCurrentTime():
+    return csinscTools.getSoundCurrentTime()
+
 def playFreeSoundOrg(id):
     csinscTools.playFreeSoundOrg(id)
     while csinscTools.isLoadingSound():
@@ -544,6 +547,25 @@ def predictPoseFromWebCam(showAll = False, topK = -1):
                 maxClass = r[0]
                 maxProb = r[1]
         return maxClass
+    
+# will classify based on current streamed image from the webcam
+def getSkeletonFromWebCam():
+    showSpinner()
+    try:
+        # todo: branch depending of para datatype
+        csinscTools.predictPoseFromWebCam(-1)
+     
+        while csinscTools.poseModelWaiting:
+            continue 
+    except Exception as e:
+        hideSpinner() 
+        raise Exception("Error attempting to predict pose from webcam stream")           
+    hideSpinner()    
+    if csinscTools.poseModelStatus != 0:
+        raise Exception(str(csinscTools.poseModelResponse))
+    
+    response = csinscTools.poseModelResponse[-1]
+    return response
 
 ################################################### teachable machine audio model ###################################################
 def loadAudioModel(url = None):
@@ -559,7 +581,7 @@ def loadAudioModel(url = None):
     return
 
 # will classify based on current streamed image from the webcam
-def predictFromAudio(topK = 1):
+def predictFromAudio(showAll = False):
     showSpinner()
     try:
         # todo: branch depending of para datatype
@@ -574,14 +596,21 @@ def predictFromAudio(topK = 1):
     if csinscTools.audioModelStatus != 0:
         raise Exception(str(csinscTools.audioModelResponse))
     response = csinscTools.audioModelResponse
+    '''
+    if showAll:
+        return response
     # only return the max probability label
+    
     maxProb = 0
     maxResponse = None
     for r in response:
         if r[1] > maxProb:
             maxProb = r[1]
-            maxResponse = r[0]
+            maxResponse = r[0]   
+
     return maxResponse
+    '''
+    return response
 
 ################################################### webcam ###################################################
 # shows the web cam in a pop up frame
