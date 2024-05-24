@@ -1438,7 +1438,7 @@ Sk.builtin._say = function say(words) {
 
 Sk.builtins["_say"] = new Sk.builtin.sk_method(
     {
-        $meth: Sk.builtin.say,
+        $meth: Sk.builtin._say,
         $flags: { OneArg: true },
         $textsig: "($module, words /)",
         $doc:

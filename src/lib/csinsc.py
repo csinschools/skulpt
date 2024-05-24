@@ -623,7 +623,10 @@ def showWebCam():
         raise Exception("Error attempting to show webcam")        
     while csinscTools.webcamWaiting:
         continue 
+
     hideSpinner()    
+    if csinscTools.webcamStatus != 0:
+        raise Exception(str(csinscTools.webcamResponse))        
     return
 
 # param is the URL of the image to predict

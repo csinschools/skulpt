@@ -933,7 +933,16 @@ mod.getWeather = new Sk.builtin.func((location, school) => {
   mod.showWebCam = new Sk.builtin.func(async () => { 
     mod.webcamWaiting = true;
     // function in console.js
-    await createWebCam();
+    try {
+      await createWebCam();
+    }
+    catch (error) {
+      mod.webcamWaiting = false;
+      mod.webcamStatus = Sk.ffi.remapToPy(1);
+      mod.webcamResponse = new Sk.builtin.str("Error with opening the webcam");
+      console.log("Error in csinscTools.showWebCam()")
+      //throw error;
+    }
     mod.webcamWaiting = false;
   });
 
