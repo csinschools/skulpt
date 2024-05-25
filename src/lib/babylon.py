@@ -11,6 +11,21 @@ class BabylonObject:
         babylonObjects[self.bObjName] = self
         BabylonObject.__counter += 1
 
+class DirectionalLight(BabylonObject):
+    def __init__(self):        
+        super().__init__()
+        self.direction = [1, -1, 1]
+        self.diffuse = [0.7, 0.7, 0.7]
+        self.specular = [1, 1, 1]
+        self.bObjType = "DirectionalLight"          
+
+class Skybox(BabylonObject):
+    def __init__(self, texture):        
+        super().__init__()
+        self.size = 1000
+        self.texture = texture
+        self.bObjType = "Skybox"    
+
 class Mesh(BabylonObject):
     def __init__(self):        
         super().__init__()
