@@ -11,6 +11,12 @@ class BabylonObject:
         babylonObjects[self.bObjName] = self
         BabylonObject.__counter += 1
 
+class Texture(BabylonObject):
+    def __init__(self, url = ""):        
+        super().__init__()
+        self.url = url
+        self.bObjType = "Texture"   
+
 class DirectionalLight(BabylonObject):
     def __init__(self):        
         super().__init__()
@@ -47,6 +53,7 @@ class Material(BabylonObject):
         super().__init__()   
         self.type = "standard"      
         self.ambientColour = [1, 1, 1]
+        self.ambientTexture = None
         self.bObjType = "Material"
         
 class Colour:
@@ -74,6 +81,7 @@ def startBabylon():
     for bObj in babylonObjects:
         for attribute in babylonObjects[bObj].__dict__:
             if isinstance(babylonObjects[bObj].__dict__[attribute], BabylonObject):
+                # resolve references to string names
                 name = babylonObjects[bObj].__dict__[attribute].bObjName
                 babylonObjects[bObj].__dict__[attribute] = name
         babylonjsWrapper.addObject(babylonObjects[bObj])
