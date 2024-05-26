@@ -8,8 +8,32 @@ class BabylonObject:
     def __init__(self):   
         self.bObjType = "Object"   
         self.bObjName =  BabylonObject.__name + str(BabylonObject.__counter)
+        
+        self._animations = []
+
         babylonObjects[self.bObjName] = self
         BabylonObject.__counter += 1
+
+    @property
+    def animations(self):
+        return self._animations
+    @animations.setter        
+    def animations(self, value):
+        self._animations = []
+        for animation in value:
+            self._animations.append(animation.bObjName)        
+
+    def beginAnimation(self, startFrame = 0, endFrame = -1, loop = True):
+        babylonjsWrapper.beginAnimation(self.bObjName, startFrame, endFrame, loop)
+
+
+class Animation(BabylonObject):
+    def __init__(self, property = "", frameRate = 10):        
+        super().__init__()
+        self.property = property
+        self.frameRate = frameRate
+        self.bObjType = "Animation"      
+        self.keys = []
 
 class Texture(BabylonObject):
     def __init__(self, url = ""):        
