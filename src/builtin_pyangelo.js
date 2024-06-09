@@ -1245,6 +1245,24 @@ function getRGB(colour) {
             return "rgba(255, 85, 85, 1)";
         case Sk.builtins.DRACULA_YELLOW:
             return "rgba(241, 250, 140, 1)";
+        case Sk.builtins.INDIGO:
+            return "rgba(75, 0, 130, 1)";
+        case Sk.builtins.DARK_GREY:
+            return "rgba(64, 64, 64, 1)";
+        case Sk.builtins.DARK_RED:
+            return "rgba(64, 0, 0, 1)";
+        case Sk.builtins.DARK_BLUE:
+            return "rgba(0, 0, 64, 1)";
+        case Sk.builtins.DARK_GREEN:
+            return "rgba(0, 64, 0, 1)";
+        case Sk.builtins.LIGHT_RED:
+            return "rgba(192, 0, 0, 1)";
+        case Sk.builtins.LIGHT_BLUE:
+            return "rgba(0, 0, 192, 1)";
+        case Sk.builtins.LIGHT_GREEN:
+            return "rgba(0, 192, 0, 1)";
+        case Sk.builtins.PINK:          
+            return "rgba(255, 192, 203, 1)";
     }
 }
 
@@ -1660,6 +1678,18 @@ Sk.PyAngelo.reset = function() {
     Sk.builtins.DRACULA_PURPLE = 20;
     Sk.builtins.DRACULA_RED = 21;
     Sk.builtins.DRACULA_YELLOW = 22;
+    // new colours
+    Sk.builtins.INDIGO = 23;
+    Sk.builtins.DARK_GREY = 24;
+    Sk.builtins.DARK_GRAY = 24;
+    Sk.builtins.DARK_RED = 25;
+    Sk.builtins.DARK_BLUE = 26;
+    Sk.builtins.DARK_GREEN = 27;
+    Sk.builtins.LIGHT_RED = 28;
+    Sk.builtins.LIGHT_BLUE = 29;
+    Sk.builtins.LIGHT_GREEN = 30;
+    Sk.builtins.PINK = 31;
+
 
     // Used to set y axis mode
     Sk.builtins.CARTESIAN = 1;

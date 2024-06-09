@@ -18,6 +18,19 @@ var $builtinmodule = function(name)
     var _images = {};
      
     var colours = {};
+    // new colours
+    Sk.builtins.INDIGO = 23;
+    Sk.builtins.DARK_GREY = 24;
+    Sk.builtins.DARK_GRAY = 24;
+    Sk.builtins.DARK_RED = 25;
+    Sk.builtins.DARK_BLUE = 26;
+    Sk.builtins.DARK_GREEN = 27;
+    Sk.builtins.LIGHT_RED = 28;
+    Sk.builtins.LIGHT_BLUE = 29;
+    Sk.builtins.LIGHT_GREEN = 30;
+    Sk.builtins.LIGHT_GREY = 31;
+    Sk.builtins.PINK = 32;
+
     colours[Sk.builtins.BLACK] = "rgba(0, 0, 0, 1)";
     colours[Sk.builtins.WHITE] = "rgba(255, 255, 255, 1)";
     colours[Sk.builtins.RED] = "rgba(255, 0, 0, 1)";
@@ -25,7 +38,20 @@ var $builtinmodule = function(name)
     colours[Sk.builtins.YELLOW] = "rgba(255, 255, 0, 1)";
     colours[Sk.builtins.VIOLET] = "rgba(255, 0, 255, 1)";
     colours[Sk.builtins.BLUE] = "rgba(0, 0, 255, 1)";
-    
+    colours[Sk.builtins.ORANGE] = "rgba(203, 75, 22, 1)";
+    colours[Sk.builtins.CYAN] = "rgba(42, 161, 152, 1)";
+    colours[Sk.builtins.GREY] = "rgba(127, 127, 127, 1)";
+    colours[Sk.builtins.INDIGO] = "rgba(75, 0, 130, 1)";
+    colours[Sk.builtins.DARK_GREY] = "rgba(64, 64, 64, 1)";
+    colours[Sk.builtins.DARK_RED] = "rgba(64, 0, 0, 1)";
+    colours[Sk.builtins.DARK_BLUE] = "rgba(0, 0, 64, 1)";
+    colours[Sk.builtins.DARK_GREEN] = "rgba(0, 64, 0, 1)";
+    colours[Sk.builtins.LIGHT_RED] = "rgba(192, 0, 0, 1)";
+    colours[Sk.builtins.LIGHT_BLUE] = "rgba(0, 0, 192, 1)";
+    colours[Sk.builtins.LIGHT_GREEN] = "rgba(0, 192, 0, 1)";
+    colours[Sk.builtins.LIGHT_GREY] = "rgba(192, 192, 192, 1)";
+    colours[Sk.builtins.PINK] = "rgba(255, 192, 203, 1)";
+
     mod.width = new Sk.builtin.int_(canvas.width);
     mod.height = new Sk.builtin.int_(canvas.height);
     
