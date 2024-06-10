@@ -11,6 +11,8 @@ var $builtinmodule = function(name)
     
     var _keysUp = {};
     var _keysDown = {};
+
+    var _mouseClicks = [];
     
     var _commands = [];
     var _activeCommands = null;
@@ -57,6 +59,15 @@ var $builtinmodule = function(name)
     
     canvas.addEventListener("keydown", _keyDownListener);
     canvas.addEventListener("keyup", _keyUpListener);
+
+    canvas.addEventListener("click", _clickListener, false);
+    canvas.addEventListener("mousedown", _mouseDownListener, false);
+    canvas.addEventListener("touchstart", _touchStartListener, false);
+
+    canvas.addEventListener("mouseup", _mouseUpListener, false);
+    canvas.addEventListener("touchend", _touchEndListener, false);    
+
+    var _mouseDown = [];
     
     ctx.font = "30px Consolas";
        
@@ -64,8 +75,7 @@ var $builtinmodule = function(name)
         
     Sk.builtins.animationFrameRequest = window.requestAnimationFrame(render);
     
-    function _convY(y)
-    {
+    function _convY(y) {
         return canvas.height - y;
     }
     
@@ -87,8 +97,7 @@ var $builtinmodule = function(name)
         _activeCommands = null;        
     }
     
-    mod.timeElapsed = function ()
-    {
+    mod.timeElapsed = function () {
         endTime = new Date();
         result = (endTime - startTime) / 1000;
         startTime = endTime;
@@ -96,29 +105,25 @@ var $builtinmodule = function(name)
         return new Sk.builtin.float_(result);
     }
 
-    function _clearScreen(args)
-    {        
+    function _clearScreen(args) {        
         ctx.fillStyle = args.fillStyle;
         ctx.fillRect(0, 0, mod.width, mod.height);   
     }
     
-    function _drawText(args)
-    {
+    function _drawText(args) {
         ctx.fillStyle = args.fillStyle;
         ctx.font = args.font;
         ctx.fillText(args.text, args.x, _convY(args.y));
     }
 
-    function _drawImage(args)
-    {
+    function _drawImage(args) {
         ctx.save();
         ctx.globalAlpha = args.opacity;
         ctx.drawImage(args.image, args.x, _convY(args.y) - args.height, args.width, args.height);
         ctx.restore();
     }    
 
-    function _drawRect(args)
-    {
+    function _drawRect(args) {
         ctx.lineWidth = args.lineWidth;
         ctx.strokeStyle = args.strokeStyle;
         ctx.beginPath();
@@ -126,8 +131,7 @@ var $builtinmodule = function(name)
         ctx.stroke();        
     }
 
-    function _drawLine(args)
-    {
+    function _drawLine(args) {
         ctx.lineWidth = args.lineWidth;
         ctx.strokeStyle = args.strokeStyle;
         ctx.beginPath();
@@ -136,22 +140,83 @@ var $builtinmodule = function(name)
         ctx.stroke();        
     }    
     
-    function _fillRect(args)
-    {
+    function _fillRect(args) {
         ctx.fillStyle = args.fillStyle;
         ctx.fillRect(args.x, _convY(args.y), args.width, -args.height);
     }
     
-    function _keyUpListener(e)
-    {
+    function _keyUpListener(e) {
         _keysUp[e.key] = true;    
         delete(_keysDown[e.key]); 
     }
     
-    function _keyDownListener(e)
-    {
+    function _keyDownListener(e) {
         _keysDown[e.key] = true;        
         delete(_keysUp[e.key]);         
+    }
+
+    function _mouseDownListener(e) {
+        var element = canvas;
+        var offsetX = 0, offsetY = 0
+    
+        if (element.offsetParent) {
+          do {
+            offsetX += element.offsetLeft;
+            offsetY += element.offsetTop;
+          } while ((element = element.offsetParent));
+        }
+    
+        x = e.pageX - offsetX;
+        y = _convY(e.pageY - offsetY); 
+        
+        _mouseDown = [x, y];
+    }
+
+    function _mouseUpListener(e) {
+        _mouseDown = [];
+    }    
+
+    function _clickListener(e) {
+        console.log("clickelistener:" + e);
+        var element = canvas;
+        var offsetX = 0, offsetY = 0
+    
+        if (element.offsetParent) {
+          do {
+            offsetX += element.offsetLeft;
+            offsetY += element.offsetTop;
+          } while ((element = element.offsetParent));
+        }
+    
+        x = e.pageX - offsetX;
+        y = _convY(e.pageY - offsetY);
+
+        //console.log("clickelistener:" + [x, y]);
+
+        _mouseClicks.push([new Date(), x, y]);
+    }
+
+    function _touchStartListener(e) {
+        console.log("_touchListener:" + e);
+        _mouseDown.push([-1, -1]);
+    }    
+    function _touchEndListener(e) {
+        console.log("_touchListener:" + e);
+        _mouseDown = [];
+    }      
+
+    function refresh() {
+        // clean out the whole the commands queue
+        _activeCommands = [..._commands];        
+        _commands = [];
+
+        // clear out any mouse click events older than 1 second
+        // new events are pushed onto the end, so we just need to 
+        // keep removing from the head until the time is below the
+        // age threshold
+        while (_mouseClicks.length > 0 && (new Date() - _mouseClicks[0][0]) > 100) {
+            _mouseClicks.shift();
+        }
     }
 
     mod.overlaps = new Sk.builtin.func((x1, y1, w1, h1, x2, y2, w2, h2) => {
@@ -179,14 +244,11 @@ var $builtinmodule = function(name)
         return new Sk.builtin.bool(released);
     });
     
-    mod.refresh = new Sk.builtin.func(() => {        
-        // clean out the whole the commands queue
-        _activeCommands = [..._commands];        
-        _commands = [];
+    mod.refresh = new Sk.builtin.func(() => {   
+        refresh();     
     });
     
-    function getColour(color, defaultCol, b, a)
-    {
+    function getColour(color, defaultCol, b, a) {
         var rgba;
         
         if (typeof(defaultCol) === 'undefined')
@@ -210,15 +272,22 @@ var $builtinmodule = function(name)
         }            
         return rgba;
     }
-        
+
+    mod.isMouseClicked = new Sk.builtin.func(() => {   
+        let clicked =  _mouseClicks.length > 0;
+        // clear out mouse clicks queue
+        _mouseClicks = [];     
+
+        return new Sk.builtin.bool(clicked);
+    });
+
+    mod.isMousePressed = new Sk.builtin.func(() => {   
+        return new Sk.builtin.bool(_mouseDown.length > 0);
+    });    
     
     // Add the say function to the module
     mod.clearScreen = new Sk.builtin.func((color, g , b, a) => {        
-        // if you're gonna be clearing the screen
-        // clean out the whole the commands queue (to avoid flicker due to drawing multiple screens per frame)
-        _activeCommands = [..._commands];
-        
-        _commands = [];
+        refresh();
         
         args = {};
         
