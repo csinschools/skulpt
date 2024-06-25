@@ -10,8 +10,8 @@ function convertYToCartesian(y) {
     return Sk.PyAngelo.canvas.height - y - 1;
 }
 
-Sk.builtin.setCanvasSize = function setCanvasSize(w, h, yAxisMode) {
-    Sk.builtin.pyCheckArgsLen("setCanvasSize", arguments.length, 2, 3);
+Sk.builtin._setCanvasSize = function _setCanvasSize(w, h, yAxisMode) {
+    Sk.builtin.pyCheckArgsLen("_setCanvasSize", arguments.length, 2, 3);
     Sk.builtin.pyCheckType("w", "integer", Sk.builtin.checkInt(w));
     Sk.builtin.pyCheckType("h", "integer", Sk.builtin.checkInt(h));
     Sk.builtin.pyCheckType("yAxisMode", "integer", Sk.builtin.checkInt(yAxisMode));
@@ -37,10 +37,10 @@ Sk.builtin.setCanvasSize = function setCanvasSize(w, h, yAxisMode) {
     }
 };
 
-Sk.builtins["setCanvasSize"] = new Sk.builtin.sk_method(
+Sk.builtins["_setCanvasSize"] = new Sk.builtin.sk_method(
     {
-        $meth: Sk.builtin.setCanvasSize,
-        $name: "setCanvasSize",
+        $meth: Sk.builtin._setCanvasSize,
+        $name: "_setCanvasSize",
         $flags: {
             NamedArgs: [null, null, "yAxisMode"],
             Defaults: [1],
@@ -1714,10 +1714,10 @@ Sk.PyAngelo.reset = function() {
 
     // Default values for every call to runSkulpt
     Sk.PyAngelo.console.innerHTML = "";
-    Sk.PyAngelo.console.style.backgroundColor = "rgba(40, 42, 54, 1)";
-    Sk.PyAngelo.textSize = "16px";
-    Sk.PyAngelo.textColour = "rgba(248, 248, 242, 1)";
-    Sk.PyAngelo.highlightColour = "rgba(40, 42, 54, 1)";
+    //Sk.PyAngelo.console.style.backgroundColor = "rgba(40, 42, 54, 1)";
+    //Sk.PyAngelo.textSize = "16px";
+    //Sk.PyAngelo.textColour = "rgba(248, 248, 242, 1)";
+    //Sk.PyAngelo.highlightColour = "rgba(40, 42, 54, 1)";
     Sk.PyAngelo.keys = {};
     Sk.PyAngelo.keyWasPressed = {};
     Sk.PyAngelo.yAxisMode = Sk.builtins.JAVASCRIPT;
@@ -1733,13 +1733,35 @@ Sk.PyAngelo.reset = function() {
     Sk.builtins.mouseIsPressed = Sk.builtin.bool.false$;
 };
 
+function _keydown(ev) {
+    console.log("Key down:" + ev);
+    ev.preventDefault();
+    Sk.PyAngelo.keys[ev.code] = true;
+    Sk.PyAngelo.keyWasPressed[ev.code] = true;
+}
+
+function _keyup(ev) {
+    ev.preventDefault();
+    Sk.PyAngelo.keys[ev.code] = false;
+    Sk.PyAngelo.keyWasPressed[ev.code] = false;
+}
+
+Sk.PyAngelo.stopPyangelo = function() {
+    document.removeEventListener("keydown", _keydown);
+    document.removeEventListener("keyup", _keyup);
+};
+
 Sk.PyAngelo.preparePage = function() {
     Sk.PyAngelo.canvas = document.getElementById("canvas");
     Sk.PyAngelo.ctx = Sk.PyAngelo.canvas.getContext("2d");
     Sk.PyAngelo.console = document.getElementById("console");
-    Sk.PyAngelo.canvas.addEventListener("keydown", _keydown);
-    Sk.PyAngelo.canvas.addEventListener("keyup", _keyup);
+    console.log("Adding Key down listener");
+    //Sk.PyAngelo.canvas.addEventListener("keydown", _keydown);
+    document.addEventListener("keydown", _keydown);
+    //Sk.PyAngelo.canvas.addEventListener("keyup", _keyup);
+    document.addEventListener("keyup", _keyup);
     Sk.PyAngelo.canvas.addEventListener("mousemove", _canvasMouseMove);
+    console.log("Adding mouse down listener");
     Sk.PyAngelo.canvas.addEventListener("mousedown", _canvasMouseDown);
     Sk.PyAngelo.canvas.addEventListener("mouseup", _canvasMouseUp);
     Sk.PyAngelo.console.addEventListener("mousedown", _focusInputElement);
@@ -1761,10 +1783,11 @@ Sk.PyAngelo.preparePage = function() {
     }
 
     function _canvasMouseDown(ev) {
-        ev.preventDefault();
+        console.log("Mouse down:" + ev);        
         _setMousePosition(ev);
         Sk.builtins.mouseIsPressed = Sk.builtin.bool.true$;
         Sk.PyAngelo.canvas.focus();
+        ev.preventDefault();
     }
 
     function _canvasMouseUp(ev) {
@@ -1781,17 +1804,7 @@ Sk.PyAngelo.preparePage = function() {
         }
     }
 
-    function _keydown(ev) {
-        ev.preventDefault();
-        Sk.PyAngelo.keys[ev.code] = true;
-        Sk.PyAngelo.keyWasPressed[ev.code] = true;
-    }
 
-    function _keyup(ev) {
-        ev.preventDefault();
-        Sk.PyAngelo.keys[ev.code] = false;
-        Sk.PyAngelo.keyWasPressed[ev.code] = false;
-    }
 
     Sk.PyAngelo.reset();
 };
