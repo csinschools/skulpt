@@ -1446,16 +1446,16 @@ Sk.builtins["dist"] = new Sk.builtin.sk_method(
     "builtins"
 );
 
-Sk.builtin.say = function say(words) {
-    Sk.builtin.pyCheckArgsLen("say", arguments.length, 1, 1);
+Sk.builtin.talk = function say(words) {
+    Sk.builtin.pyCheckArgsLen("talk", arguments.length, 1, 1);
     Sk.builtin.pyCheckType("words", "string", Sk.builtin.checkString(words));
     words = Sk.ffi.remapToJs(words);
     speechSynthesis.speak(new SpeechSynthesisUtterance(words));
 };
 
-Sk.builtins["say"] = new Sk.builtin.sk_method(
+Sk.builtins["talk"] = new Sk.builtin.sk_method(
     {
-        $meth: Sk.builtin.say,
+        $meth: Sk.builtin.talk,
         $flags: { OneArg: true },
         $textsig: "($module, words /)",
         $doc:
