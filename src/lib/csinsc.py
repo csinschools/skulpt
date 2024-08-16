@@ -1,7 +1,7 @@
 import csinscTools
 import re
 from time import sleep
-from random import choice
+from random import choice, randint
 
 class Colour:
     reset = "\u001b[ 0;2;0;0;0 m"
@@ -52,6 +52,29 @@ class Style:
     default = "\u001b[ 5;2;0;0;0 m"
     reset = "\u001b[ 5;2;0;0;0 m"
 
+############################# Tone.js Synthesizer functions ######################
+
+class Tone:
+    def Begin():
+        csinscTools.toneStart()
+    def Play(note, duration, time = -1):
+        try:
+            csinscTools.tonePlay(note, duration, time)
+        except Exception as e:
+            raise Exception(str(e))  
+    def Sleep(duration):
+        try:
+            time = csinscTools.toneSleep(duration)
+            sleep(time)
+        except Exception as e:
+            raise Exception(str(e))          
+
+def tonePlay(note, duration, time = -1):
+    Tone.Play(note, duration, time)
+def toneBegin():
+    Tone.Begin()
+def toneSleep(duration):
+    Tone.Sleep(duration)
 
 #schoolID = ""
 # use a default string to enable via web service as needed for (temp) global access
@@ -185,6 +208,8 @@ def printImage(url, width = None, height = None):
 def choose(*options):
     return choice(options)
 
+def rollDice(sides = 6):
+    return randint(1, sides)
 
 #### helper prints without casting
 def printWithNumbers(*args):
@@ -256,7 +281,7 @@ def input_string(*args):
 
 ################################################### openAI API ###################################################
 # alias for getOpenAICompletion
-def getChatGPTAnswer(prompt):
+def getChatGPTAnswer(prompt, addTruncateText = True):
     return getOpenAICompletion(prompt)
 
 def getOpenAICompletion(prompt):
@@ -275,9 +300,11 @@ def getOpenAICompletion(prompt):
         raise Exception("School ID not authenticated, please check the ID and try again, or contact CS in Schools to obtain an ID for your school.")    
     elif csinscTools.openAIStatus != 200:
         raise Exception("There was an error running the API on the server, please try again later or contact CS in Schools support. Details:" + str(csinscTools.openAIResponse))                     
-    response = csinscTools.openAIResponse
+    response = str(csinscTools.openAIResponse).strip()
     # TODO: find a better way to include the 'truncation' text - as it is mixing presentation with content
-    return str(response).strip() + Colour.blue + " (... response may be truncated)" + Colour.reset
+    if addTruncateText:
+        response += Colour.blue + " (... response may be truncated)" + Colour.reset
+    return response
 
 # DALL.E api
 def getOpenAIImage(prompt):

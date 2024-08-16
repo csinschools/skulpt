@@ -1054,6 +1054,29 @@ mod.getWeather = new Sk.builtin.func((location, school) => {
       throw error;
     }
   }
+
+  /////////////////////////////////////////// Synthesizer Module ////////////////////////////////////////////
+
+  mod.toneStart = new Sk.builtin.func(() => { 
+    tone_start();
+  });
+  mod.tonePlay = new Sk.builtin.func((note, duration, time) => { 
+    try {
+      tone_play(note.v, duration.v, time.v);
+    } catch (error) {
+      tone_stop();
+      throw new Sk.builtin.Exception(error.message);
+    }
+  });    
+  mod.toneSleep = new Sk.builtin.func((duration) => { 
+    try {
+      return Sk.ffi.remapToPy(tone_sleep(duration.v));
+    } catch (error) {
+      tone_stop();
+      throw new Sk.builtin.Exception(error.message);
+    }
+  });    
+
   //////////////////////////////////////////// Lanugages Mapping ////////////////////////////////////////////
    
   var languages = {
