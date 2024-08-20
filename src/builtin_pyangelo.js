@@ -1446,24 +1446,167 @@ Sk.builtins["dist"] = new Sk.builtin.sk_method(
     "builtins"
 );
 
-Sk.builtin.talk = function say(words) {
-    Sk.builtin.pyCheckArgsLen("talk", arguments.length, 1, 1);
+/////////////////// say() with voices ///////////////////
+var languages = {
+    "arabic":"ar-SA",
+    "bangla":"bn-BD",
+    "indian bangla":"bn-IN",
+    "czech":"cs-CZ",
+    "danish":"da-DK",
+    "austrian german":"de-AT",
+    "swiss german":"de-CH",
+    "german":"de-DE",
+    "greek":"el-GR",
+    "english":"en-AU",
+    "australian english":"en-AU",
+    "canadian english":"en-CA",
+    "british english":"en-GB",
+    "irish english":"en-IE",
+    "indian english":"en-IN",
+    "new zeland english":"en-NZ",
+    "american english":"en-US",
+    "south african english":"en-ZA",
+    "argentine spanish":"es-AR",
+    "chilean spanish":"es-CL",
+    "colombian spanish":"es-CO",
+    "spanish":"es-ES",
+    "mexican spanish":"es-MX",
+    "american spanish":"es-US",
+    "finnish":"fi-FI",
+    "belgian french":"fr-BE",
+    "canadian french":"fr-CA",
+    "swiss french":"fr-CH",
+    "french":"fr-FR",
+    "hebrew":"he-IL",
+    "hindi":"hi-IN",
+    "hungarian":"hu-HU",
+    "indonesian":"id-ID",
+    "swiss italian":"it-CH",
+    "italian":"it-IT",
+    "japanese":"ja-JP",
+    "korean":"ko-KR",
+    "belgian dutch":"nl-BE",
+    "dutch":"nl-NL",
+    "norwegian":"no-NO",
+    "polish":"pl-PL",
+    "brazilian portugese":"pt-BR",
+    "portugese":"pt-PT",
+    "romanian":"ro-RO",
+    "russian":"ru-RU",
+    "slovak":"sk-SK",
+    "swedish":"sv-SE",
+    "tamil":"ta-IN",
+    "sri lankan tamil":"ta-LK",
+    "thai":"th-TH",
+    "turkish":"tr-TR",
+    "chinese":"zh-CN",
+    "mandarin":"zh-CN",    
+    "hong kong chinese":"zh-HK",
+    "cantonese":"zh-HK",
+    "taiwan chinese":"zh-TW",
+    "taiwanese":"zh-TW",      
+};  
+var synth = window.speechSynthesis;
+var voices = [];
+function populateVoiceList() {
+    voices = synth.getVoices();
+}    
+populateVoiceList();
+if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = populateVoiceList;
+}
+function saySomething (text, voice, lang) {    
+    const badWords = [
+        "YXJzZQ==",         "YXJzZWhvbGU=",     "YmFsbHM=",         "YmFzdGFyZA==",
+        "YmVlZg==",         "Y3VydGFpbnM=",     "Y3Vt",             "YmVsbGVuZA==",
+        "Yml0Y2g=",         "YnVra2FrZQ==",     "YnVsbHNoaXQ=",     "Y2Fjaw==",
+        "Y2hvYWQ=",         "Y29jaw==",         "Y29jayBjaGVlc2U=", "Y29jayBqb2NrZXk=",
+        "Y29ja3N1Y2tlcg==", "Y293",             "Y3JhcA==",         "Y3Jpa2V5",
+        "Y3VudA==",         "ZGFtbg==",         "ZGljaw==",         "ZGlja2hlYWQ=",
+        "ZGlsZG8=",         "ZHVmZmVy",         "ZmFubnk=",         "ZmVjaw==",
+        "ZmxhcHM=",         "ZnVjaw==",         "ZnVja2luZyBjdW50", "ZnVja3RhcmQ=",
+        "Z29kZGFt",         "amVzdXMgY2hyaXN0", "aml6eg==",         "a25vYg==",
+        "a25vYmhlYWQ=",     "bWFua3k=",         "bWluZ2U=",         "bW90aGVyZnVja2Vy",
+        "bXVudGVy",         "bXVwcGV0",         "bmFmZg==",         "bml0d2l0",
+        "bnVtcHR5",         "bnV0dGVy",         "cGlzcyBvZmY=",     "cGlzcy1mbGFwcw==",
+        "cGlzc2Vk",         "cGlzc2VkIG9mZg==", "cGxvbmtlcg==",     "cG9uY2U=",
+        "cG9vZg==",         "cG91Zg==",         "cHJpY2s=",         "cHVzc3k=",
+        "cmFwZXk=",         "c2hhZw==",         "c2hpdA==",         "c2thbms=",
+        "c2xhZw==",         "c2xhcHBlcg==",     "c2x1dA==",         "c25hdGNo",
+        "c3B1bms=",         "dGFydA==",         "dGl0",             "dG9zc2Vy",
+        "dHJvbGxvcA==",     "dHdhdA==",         "d2Fua2Vy",         "d2Fua3N0YWlu",
+        "d2hvcmU=",         "Y3VudA==",         "ZmFnZ290",         "bmlnZ2Vy",
+        "cGVuaXM="
+    ];
+    const replies = [
+        "nice try",   "better luck next time",                  "do you talk to your grandmother with that foul language?", 
+        "ah nope",    "HELP! this student is trying to swear",  "get back to work please"
+    ];
+    for (let i = 0; i < badWords.length; i++) {
+        let checkWord = atob(badWords[i]);
+        if (text.toString().toLowerCase().indexOf(checkWord) > -1) { 
+            text = replies[Math.floor(Math.random() * (replies.length))];
+        }
+    }  
+    var utterThis = new SpeechSynthesisUtterance(text);
+    if (voice >= voices.length) {
+        voice %= voices.length;
+    } 
+    utterThis.voice = voices[voice];
+    utterThis.pitch = 1;
+    utterThis.rate = 1;
+
+    if (lang !== undefined) {
+        lang = lang.toString().toLowerCase();
+        if (!(lang in languages)) {
+            throw "Unknown language";
+        }
+        lang = languages[lang];
+        utterThis.lang = lang;
+    }
+
+    synth.speak(utterThis);        
+
+    return new Sk.builtin.none;       
+}
+
+Sk.builtin.say = function say(words, voice = 0) {
+    Sk.builtin.pyCheckArgsLen("say", arguments.length, 1, 2);
     Sk.builtin.pyCheckType("words", "string", Sk.builtin.checkString(words));
+    Sk.builtin.pyCheckType("voice", "number", Sk.builtin.checkNumber(voice));    
     words = Sk.ffi.remapToJs(words);
-    speechSynthesis.speak(new SpeechSynthesisUtterance(words));
+    voice = Sk.ffi.remapToJs(voice);
+    saySomething(words, voice);
 };
 
-Sk.builtins["talk"] = new Sk.builtin.sk_method(
+Sk.builtins["say"] = new Sk.builtin.sk_method(
     {
-        $meth: Sk.builtin.talk,
-        $flags: { OneArg: true },
-        $textsig: "($module, words /)",
+        $meth: Sk.builtin.say,
+        $flags: { MinArgs: 1, MaxArgs: 2 },
+        $textsig: "($module, words, voice /)",
         $doc:
             "Says the words using text to speech technology.",
     },
     null,
     "builtins"
 );
+// talk is an alias for say
+Sk.builtins["talk"] = new Sk.builtin.sk_method(
+    {
+        $meth: Sk.builtin.say,
+        $flags: { MinArgs: 1, MaxArgs: 2 },
+        $textsig: "($module, words, voice /)",
+        $doc:
+            "Says the words using text to speech technology.",
+    },
+    null,
+    "builtins"
+);
+Sk.builtin.say.co_varnames = ["words", "voice"];
+Sk.builtin.say.$defaults = [Sk.builtin.none, new Sk.builtin.int_(0)];
+Sk.builtin.say.co_numargs = 2;
+
+/////////////////////////////////////////////////////////
 
 // PyAngelo Classes
 const initPoint = function (self, x, y) {
@@ -1527,7 +1670,6 @@ const colourClass = function ($gbl, $loc) {
         return new Sk.builtin.str("Colour(" + self.r + ", " + self.g + ", " + self.b + ", " + self.a + ")");
     });
     $loc.__str__ = $loc.__repr__;
-
     // allow direct access to r, g, b, a properties
     $loc.__getattr__ = new Sk.builtin.func(function (self, key) {
         key = Sk.ffi.remapToJs(key);
