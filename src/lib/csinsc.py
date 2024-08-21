@@ -282,9 +282,9 @@ def input_string(*args):
 ################################################### openAI API ###################################################
 # alias for getOpenAICompletion
 def getChatGPTAnswer(prompt, addTruncateText = True):
-    return getOpenAICompletion(prompt)
+    return getOpenAICompletion(prompt, addTruncateText)
 
-def getOpenAICompletion(prompt):
+def getOpenAICompletion(prompt, addTruncateText = True):
     if len(schoolID) == 0:
         raise Exception("School ID not set. Please set it using the function setSchool().")       
     showSpinner()
