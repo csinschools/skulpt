@@ -195,8 +195,52 @@ Sk.builtin.file.$readline = function (self, size, prompt) {
     }
 };
 
+Sk.builtin.file.$readlineasfloat = function (self, size, prompt) {
+    if (self.fileno === 0) {
+        var x, susp;
+
+        var lprompt = Sk.ffi.remapToJs(prompt);
+
+        lprompt = lprompt ? lprompt : "";
+
+        x = Sk.inputfun(lprompt);
+
+        if (x instanceof Promise || (x && typeof x.then === "function")) {
+            susp = new Sk.misceval.Suspension();
+
+            susp.resume = function() {
+                if (susp.data.error) {
+                    throw susp.data.error;
+                }
+
+                return new Sk.builtin.float_(susp.data.result);
+            };
+
+            susp.data = {
+                type: "Sk.promise",
+                promise: x
+            };
+
+            return susp;
+        } else {
+            return new Sk.builtin.float_(x);
+        }
+    } else {
+        var line = "";
+        if (self.currentLine < self.lineList.length) {
+            line = self.lineList[self.currentLine];
+            self.currentLine++;
+        }
+        return new Sk.builtin.float_(line);
+    }
+};
+
 Sk.builtin.file.prototype["readline"] = new Sk.builtin.func(function readline(self, size) {
     return Sk.builtin.file.$readline(self, size, undefined);
+});
+
+Sk.builtin.file.prototype["readlineasfloat"] = new Sk.builtin.func(function readlineasfloat(self, size) {
+    return Sk.builtin.file.$readlineasfloat(self, size, undefined);
 });
 
 Sk.builtin.file.prototype["readlines"] = new Sk.builtin.func(function readlines(self, sizehint) {
