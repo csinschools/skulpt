@@ -203,17 +203,39 @@ var $builtinmodule = function(name)
       return text;      
     });
 
-    /////////////////////////////////// image functions ///////////////////////////
+    /////////////////////////////////// UI functions ///////////////////////////
     mod.loadingImage = false;
     mod.isLoadingImage = new Sk.builtin.func(() => {   
       return new Sk.builtin.bool(mod.loadingImage);
     });      
 
-    mod.addImage = new Sk.builtin.func((url, width, height) => {
+    mod.addImage = new Sk.builtin.func((url, width, height, x , y) => {
       mod.loadingImage = true;
       if (url.v !== null && url.v.length > 0) { 
-        addImage(url.v, width.v, height.v, () => { mod.loadingImage = false; }, () => { mod.loadingImage = false;});
+        addImage(url.v, width.v, height.v, x.v, y.v, () => { mod.loadingImage = false; }, () => { mod.loadingImage = false;});
       };});   
+
+    mod.buttonClicked = false;
+    mod.buttonsClicked = [];
+    function buttonClicked(element) {
+      console.log(element.target.id + " clicked");
+      mod.buttonsClicked.push(element.target.id);
+      mod.buttonClicked = true;
+    }
+
+    mod.getButtonsClicked = new Sk.builtin.func(() => {
+      return Sk.ffi.remapToPy(mod.buttonsClicked);
+    });
+
+    mod.clearButtonsClicked = new Sk.builtin.func(() => {
+      mod.buttonsClicked = [];
+      mod.buttonClicked = false;
+    });
+
+    mod.addButton = new Sk.builtin.func((id, text, x, y, width, height) => {
+      addButton(id.v, text.v, width.v, height.v, x.v, y.v, width.v, height.v, buttonClicked);
+    });
+   
 
     /////////////////////////////////// audio functions ///////////////////////////
     // only 1 audioElement at a time

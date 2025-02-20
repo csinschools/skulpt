@@ -199,10 +199,65 @@ def stopSound():
     csinscTools.stopSound()
 
 
-def printImage(url, width = None, height = None):
-    csinscTools.addImage(url, width, height)
+########################### UI functions and classes ############################
+
+def printImage(url, width = None, height = None, x = None, y = None):
+    csinscTools.addImage(url, width, height, x, y)
     while csinscTools.isLoadingImage():
         continue 
+
+class Button:
+    id = 0
+    allButtons = {}
+    buttonsClicked = []
+    def __init__(self, text, x = None, y = None, width = None, height = None, callback = None):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.callback = callback
+        # set ID and increment class variable
+        self.id = Button.id
+        Button.id += 1
+        Button.allButtons[self.id] = self
+
+def waitForButtonClick():
+    # reset all button states
+    csinscTools.clearButtonsClicked()
+    for buttonID in Button.allButtons:
+        Button.allButtons[buttonID].clicked = False
+
+
+    while not csinscTools.buttonClicked:
+        continue
+
+    Button.buttonsClicked = csinscTools.getButtonsClicked()
+    for buttonID in Button.buttonsClicked:
+        Button.allButtons[int(buttonID)].clicked = True
+
+def isButtonClicked(button):
+    return Button.allButtons[button.id].clicked
+
+def getButtonsClicked():
+    return Button.buttonsClicked
+
+def createButton(text, x = None, y = None, width = None, height = None, callback = None):
+    newButton = Button(text, x, y, width, height, callback)
+    return newButton
+
+def printButton(button, x = None, y = None, width = None, height = None):
+    if x is not None:
+        button.x = x
+    if y is not None:
+        button.y = y      
+    if width is not None:
+        button.width = width
+    if height is not None:
+        button.height = height        
+    csinscTools.addButton(button.id, button.text, button.x, button.y, button.width, button.height, button.callback)
+
+#################################################################################
 
 #### probability functions
 def choose(*options):
