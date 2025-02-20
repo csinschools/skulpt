@@ -209,6 +209,7 @@ def printImage(url, width = None, height = None, x = None, y = None):
 class Button:
     id = 0
     allButtons = {}
+    buttonsByText = {}
     buttonsClicked = []
     def __init__(self, text, x = None, y = None, width = None, height = None, callback = None):
         self.text = text
@@ -221,6 +222,7 @@ class Button:
         self.id = Button.id
         Button.id += 1
         Button.allButtons[self.id] = self
+        Button.buttonsByText[self.text] = self
 
 def waitForButtonClick():
     # reset all button states
@@ -237,7 +239,10 @@ def waitForButtonClick():
         Button.allButtons[int(buttonID)].clicked = True
 
 def isButtonClicked(button):
-    return Button.allButtons[button.id].clicked
+    if isinstance(button, str):
+        return Button.buttonsByText[button].clicked
+    else:
+        return Button.allButtons[button.id].clicked
 
 def getButtonsClicked():
     return Button.buttonsClicked
@@ -247,6 +252,9 @@ def createButton(text, x = None, y = None, width = None, height = None, callback
     return newButton
 
 def printButton(button, x = None, y = None, width = None, height = None):
+    if isinstance(button, str):
+        # if button is text, create the button object and reassign
+        button = createButton(button, x, y, width, height)
     if x is not None:
         button.x = x
     if y is not None:
