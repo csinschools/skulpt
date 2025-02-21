@@ -200,8 +200,25 @@ def stopSound():
 
 
 ########################### UI functions and classes ############################
+import re
+
+def extract_drive_id(url):
+    pattern = r"https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)"
+    match = re.search(pattern, url)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
 
 def printImage(url, width = None, height = None, x = None, y = None):
+    # using the thumbnail workaround for google drive links
+    # ensure that permissions are enabled for "ALL"    
+    # this could stop working in the future!
+    googleDriveId = extract_drive_id(url)
+    if googleDriveId is not None:
+        url = "https://drive.google.com/thumbnail?id=" + googleDriveId + "&sz=w1000"
+
     csinscTools.addImage(url, width, height, x, y)
     while csinscTools.isLoadingImage():
         continue 
