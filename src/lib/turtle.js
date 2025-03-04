@@ -928,6 +928,9 @@ function generateTurtleModule(_target) {
             ]);
         };
 
+        // alias for $color - but Australian spelling!
+        proto.$colour = proto.$color;
+
         proto.$fill = function(flag) {
             var self = this;
 

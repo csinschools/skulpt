@@ -181,6 +181,9 @@ def setVolume(volume):
     csinscTools.setVolume(volume / 100)
 
 def playSound(url, loop = False):
+    googleDriveId = extract_drive_id(url)
+    if googleDriveId is not None:
+        url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId    
     csinscTools.playSound(url, loop)
     while csinscTools.isLoadingSound():
         continue 
@@ -217,7 +220,7 @@ def printImage(url, width = None, height = None, x = None, y = None):
     # this could stop working in the future!
     googleDriveId = extract_drive_id(url)
     if googleDriveId is not None:
-        url = "https://drive.google.com/thumbnail?id=" + googleDriveId + "&sz=w1000"
+        url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId
 
     csinscTools.addImage(url, width, height, x, y)
     while csinscTools.isLoadingImage():
@@ -256,10 +259,13 @@ def waitForButtonClick():
         Button.allButtons[int(buttonID)].clicked = True
 
 def isButtonClicked(button):
-    if isinstance(button, str):
-        return Button.buttonsByText[button].clicked
-    else:
-        return Button.allButtons[button.id].clicked
+    try:
+        if isinstance(button, str):
+            return Button.buttonsByText[button].clicked
+        else:
+            return Button.allButtons[button.id].clicked
+    except:
+        raise Exception("Button: " + button + " not found.")
 
 def getButtonsClicked():
     return Button.buttonsClicked
@@ -281,6 +287,64 @@ def printButton(button, x = None, y = None, width = None, height = None):
     if height is not None:
         button.height = height        
     csinscTools.addButton(button.id, button.text, button.x, button.y, button.width, button.height, button.callback)
+
+class Textbox:
+    id = 0
+    allTextboxes = {}
+    textboxesByText = {}
+    textboxesUpdated = []
+    def __init__(self, text, x = None, y = None, width = None, height = None, callback = None):
+        self._text = text
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.callback = callback
+        # set ID and increment class variable
+        self.id = Textbox.id
+        Textbox.id += 1
+        Textbox.allTextboxes[self.id] = self
+        Textbox.textboxesByText[self._text] = self
+
+    @property
+    def Text(self):
+        contents = getTextboxContents(self)
+        self._text = contents
+        return self._text
+    
+    @Text.setter
+    def Text(self, value):
+        self._text = value
+        csinscTools.setTextboxContents(self.id, value)
+
+def getTextboxContents(textbox):
+    id = 0
+    try:
+        if isinstance(textbox, str):
+            id = Textbox.textboxesByText[textbox].id
+        else:
+            id = textbox.id
+        return csinscTools.getTextboxContents(id)
+    except:
+        raise Exception("Textbox: " + textbox + " not found.")
+
+def createTextbox(text, x = None, y = None, width = None, height = None, callback = None):
+    newTextbox = Textbox(text, x, y, width, height, callback)
+    return newTextbox
+
+def printTextbox(textbox, x = None, y = None, width = None, height = None):
+    if isinstance(textbox, str):
+        # if button is text, create the button object and reassign
+        textbox = createTextbox(textbox, x, y, width, height)
+    if x is not None:
+        textbox.x = x
+    if y is not None:
+        textbox.y = y      
+    if width is not None:
+        textbox.width = width
+    if height is not None:
+        textbox.height = height        
+    csinscTools.addTextbox(textbox.id, textbox._text, textbox.x, textbox.y, textbox.width, textbox.height, textbox.callback)
 
 #################################################################################
 

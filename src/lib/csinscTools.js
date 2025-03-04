@@ -235,6 +235,24 @@ var $builtinmodule = function(name)
     mod.addButton = new Sk.builtin.func((id, text, x, y, width, height) => {
       addButton(id.v, text.v, width.v, height.v, x.v, y.v, width.v, height.v, buttonClicked);
     });
+
+    mod.textBoxes = {}
+    function textboxChanged(element) {
+      console.log(element.target.id + " changed");
+    }
+
+    mod.getTextboxContents = new Sk.builtin.func((id) => {
+      return new Sk.builtin.str(mod.textBoxes[id].value);
+    });    
+
+    mod.setTextboxContents = new Sk.builtin.func((id, text) => {
+      mod.textBoxes[id].value = text;
+    });        
+
+    mod.addTextbox = new Sk.builtin.func((id, text, x, y, width, height) => {
+      var textBox = addTextbox(id.v, text.v, width.v, height.v, x.v, y.v, width.v, height.v, textboxChanged);
+      mod.textBoxes[id] = textBox;
+    });    
    
 
     /////////////////////////////////// audio functions ///////////////////////////
