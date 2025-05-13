@@ -1515,7 +1515,7 @@ populateVoiceList();
 if (synth.onvoiceschanged !== undefined) {
     synth.onvoiceschanged = populateVoiceList;
 }
-function saySomething (text, voice, lang) {    
+async function saySomething (text, voice, lang) {    
     const badWords = [
         "YXJzZQ==",         "YXJzZWhvbGU=",     "YmFsbHM=",         "YmFzdGFyZA==",
         "YmVlZg==",         "Y3VydGFpbnM=",     "Y3Vt",             "YmVsbGVuZA==",
@@ -1565,18 +1565,23 @@ function saySomething (text, voice, lang) {
         utterThis.lang = lang;
     }
 
-    synth.speak(utterThis);        
+    await new Promise(function(resolve) {
+        utterThis.onend = resolve;
+        synth.speak(utterThis); 
+    });
+    
+    //synth.speak(utterThis);        
 
     return new Sk.builtin.none;       
 }
 
-Sk.builtin.say = function say(words, voice = 0) {
+Sk.builtin.say = async function say(words, voice = 0) {
     Sk.builtin.pyCheckArgsLen("say", arguments.length, 1, 2);
     Sk.builtin.pyCheckType("words", "string", Sk.builtin.checkString(words));
     Sk.builtin.pyCheckType("voice", "number", Sk.builtin.checkNumber(voice));    
     words = Sk.ffi.remapToJs(words);
     voice = Sk.ffi.remapToJs(voice);
-    saySomething(words, voice);
+    await saySomething(words, voice);
 };
 
 Sk.builtins["say"] = new Sk.builtin.sk_method(

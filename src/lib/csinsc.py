@@ -99,8 +99,8 @@ def say(text, voice = 0, language = "english"):
         firstUtterance = False
     csinscTools.saySomething(text, voice, language)
     # block until finished speaking
-    while csinscTools.isSpeaking():
-        continue    
+    # while csinscTools.isSpeaking():
+    #    continue    
     
 # overloaded on type:
 # if string, act like input()
