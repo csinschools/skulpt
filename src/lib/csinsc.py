@@ -183,7 +183,8 @@ def setVolume(volume):
 def playSound(url, loop = False):
     googleDriveId = extract_drive_id(url)
     if googleDriveId is not None:
-        url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId    
+        url = webServiceURL + "gdrive?id=" + googleDriveId 
+        #url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId    
     csinscTools.playSound(url, loop)
     while csinscTools.isLoadingSound():
         continue 
@@ -220,7 +221,8 @@ def printImage(url, width = None, height = None, x = None, y = None):
     # this could stop working in the future!
     googleDriveId = extract_drive_id(url)
     if googleDriveId is not None:
-        url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId
+        url = webServiceURL + "gdrive?id=" + googleDriveId 
+        #url = "https://codestore-348206.ts.r.appspot.com/gdrive?id=" + googleDriveId
 
     csinscTools.addImage(url, width, height, x, y)
     while csinscTools.isLoadingImage():
