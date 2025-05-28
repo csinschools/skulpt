@@ -293,6 +293,37 @@ var $builtinmodule = function(name)
       playFreeSound(id, () => { mod.loadingSound = false; }, () => { mod.loadingSound = false;});       
     });
 
+    /////////////////////////////////////// Logging APIs ///////////////////////////////////////
+    mod.logToServer = new Sk.builtin.func((school, sessionID, data) => {
+      var xhr = new XMLHttpRequest();      
+      const requestURL =  `${codestoreURL}datalogging/log?school=${school}&session=${sessionID}&data=${data}`;
+      console.log(requestURL);
+      xhr.open("GET", requestURL, true);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.timeout = 20000; // time in milliseconds
+      xhr.ontimeout = (e) => {
+        console.log("Timeout in logToServer API: " + e);
+      };        
+      xhr.onerror = function(e) {
+        console.log("Error in logToServer API: " + e);
+      }      
+      xhr.onreadystatechange = function() {
+        console.log("Response:" + xhr.responseText);        
+        if (this.readyState === XMLHttpRequest.DONE) {
+          if (this.status === 200) {          
+            if (xhr.responseText.length > 0) {
+              const response =  JSON.parse(Sk.ffi.remapToPy(xhr.responseText));
+              console.log("Success @ logToServer API: " + response);
+            }
+          } else if (this.status === 429) {
+            console.log("Error @ logToServer API, rate throttling:" + this.readyState + "," + this.status);
+          } else {
+            console.log("Error @ logToServer API, error trying to access the datalogging endpoint:" + this.readyState + "," + this.status);
+          }
+        }     
+      }  
+      xhr.send();  
+    });        
     /////////////////////////////////////// Open AI APIs ///////////////////////////////////////
 
     mod.openAIWaiting = false;

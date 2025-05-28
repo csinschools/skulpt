@@ -425,6 +425,9 @@ def inputNum(*args):
 def input_string(*args):
     return input(*args)
 
+def logToServer(school, sessionID, data):
+    return csinscTools.logToServer(school, sessionID, data)
+
 ################################################### openAI API ###################################################
 # alias for getOpenAICompletion
 def getChatGPTAnswer(prompt, addTruncateText = True):
