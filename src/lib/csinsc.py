@@ -5,7 +5,6 @@ from random import choice, randint
 
 class Colour:
     reset = "\u001b[ 0;2;0;0;0 m"
-    red = "\u001b[ 38;2;255;0;0 m"
     black = "\u001b[ 38;2;0;0;0 m"
     white = "\u001b[ 38;2;255;255;255 m"    
     grey = "\u001b[ 38;2;128;128;128 m"
@@ -20,12 +19,24 @@ class Colour:
     orange = "\u001b[ 38;2;255;165;0 m"
     purple = "\u001b[ 38;2;127;0;255 m"
     pink = "\u001b[ 38;2;255;192;203 m" 
+    brown = "\u001b[ 38;2;150;75;0 m" 
     violet = "\u001b[ 38;2;128;0;255 m" 
     indigo = "\u001b[ 38;2;75;0;130 m"     
-    brown = "\u001b[ 38;2;150;75;0 m" 
+    crimson = "\u001b[ 38;2;220;20;60 m"
+    coral = "\u001b[ 38;2;255;127;80 m"
+    gold = "\u001b[ 38;2;255;215;0 m"
+    khaki = "\u001b[ 38;2;240;230;140 m"
+    olive = "\u001b[ 38;2;128;128;0 m"
+    darkGreen = "\u001b[ 38;2;0;100;0 m"
+    darkBlue = "\u001b[ 38;2;0;0;100 m"
+    darkRed = "\u001b[ 38;2;100;0;0 m"
+    lightGreen = "\u001b[ 38;2;144;238;144 m"
+    lightBlue = "\u001b[ 38;2;173;216;230 m"
+    lightRed = "\u001b[ 38;2;255;160;122 m"
+    
 
 class Highlight:
-    red = "\u001b[ 48;2;255;0;0 m"
+    reset = "\u001b[ 48;2;0;0;0 m"
     black = "\u001b[ 48;2;0;0;0 m"
     white = "\u001b[ 48;2;255;255;255 m"
     grey = "\u001b[ 48;2;128;128;128 m"
@@ -43,7 +54,18 @@ class Highlight:
     brown = "\u001b[ 48;2;150;75;0 m" 
     violet = "\u001b[ 48;2;128;0;255 m" 
     indigo = "\u001b[ 48;2;75;0;130 m" 
-    reset = "\u001b[ 48;2;0;0;0 m"
+    crimson = "\u001b[ 48;2;220;20;60 m"
+    coral = "\u001b[ 48;2;255;127;80 m"
+    gold = "\u001b[ 48;2;255;215;0 m"
+    khaki = "\u001b[ 48;2;240;230;140 m"
+    olive = "\u001b[ 48;2;128;128;0 m"
+    darkGreen = "\u001b[ 48;2;0;100;0 m"
+    darkBlue = "\u001b[ 48;2;0;0;100 m"
+    darkRed = "\u001b[ 48;2;100;0;0 m"
+    lightGreen = "\u001b[ 48;2;144;238;144 m"
+    lightBlue = "\u001b[ 48;2;173;216;230 m"
+    lightRed = "\u001b[ 48;2;255;160;122 m"    
+    
     
 class Style:
     bold = "\u001b[ 1;2;0;0;0 m"
@@ -260,6 +282,13 @@ def waitForButtonClick():
     for buttonID in Button.buttonsClicked:
         Button.allButtons[int(buttonID)].clicked = True
 
+# aliases for waitForButtonClick()
+def waitForButtonClicked():
+    return waitForButtonClick()      
+
+def waitForButton():
+    return waitForButtonClick()       
+
 def isButtonClicked(button):
     try:
         if isinstance(button, str):
@@ -268,6 +297,13 @@ def isButtonClicked(button):
             return Button.allButtons[button.id].clicked
     except:
         raise Exception("Button: " + button + " not found.")
+
+# aliases for isButtonClicked()    
+def isButtonClick(button):    
+    return isButtonClicked(button)
+
+def isButton(button):    
+    return isButtonClicked(button)
 
 def getButtonsClicked():
     return Button.buttonsClicked
@@ -602,8 +638,6 @@ def getTranslation(text, languageTarget = "english"):
 
 ################################################### Weather API ###################################################
 def getWeather(location):
-    if len(schoolID) == 0:
-        raise Exception("School ID not set. Please set it using the function setSchool().")
     showSpinner()
     try:
         csinscTools.getWeather(location, schoolID)

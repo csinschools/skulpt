@@ -3,9 +3,10 @@ from time import sleep, time
 from csinsc import Colour
 
 class Microbit:
-    def __init__(self, blockUntilConnect = True, showProgress = True, timeout = 20):
+    def __init__(self, blockUntilConnect = True, showProgress = False, timeout = 20):
         self.uBit = microBit.Microbit()
         self.showProgress = showProgress
+        self.buttonStates = {}
         print("Connecting...please wait")
         success = True
         services = 0
@@ -38,7 +39,6 @@ class Microbit:
             self.name = self.uBit.getName()
         if success:
             print(Colour.green + "Houston, I'm ready to run code on " + Colour.reset + self.name)
-            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - -")
         else:
             print(Colour.blue + "There was a problem connecting to the microbit, please try again." + Colour.reset)
     
@@ -101,6 +101,41 @@ class Microbit:
         while self.uBit.getButtonB() == 0:
             continue
 
+    # alias functions to maintain consistency with buttons in the goodies module
+    def isButton(self, button):
+        return self.isButtonClicked(button)
+
+    def isButtonClick(self, button):
+        return self.isButtonClicked(button)
+
+    def isButtonClicked(self, button):
+        result = self.buttonStates[button.lower()] == 1
+        self.buttonStates[button.lower()] = 0
+        return result
+
+    def waitForButton(self):                        # alias for waitForButtonClicked()
+        return self.waitForButtonClicked()        
+
+    def waitForButtonClick(self):                   # alias for waitForButtonClicked()
+        return self.waitForButtonClicked()
+    
+    def waitForButtonClicked(self):                 # waits for any button to be pressed, then released
+        buttonAState = self.uBit.getButtonA()
+        buttonBState = self.uBit.getButtonB()
+
+        # wait for all previous buttons to be released
+        while buttonAState != 0 or buttonBState != 0:
+            buttonAState = self.uBit.getButtonA()
+            buttonBState = self.uBit.getButtonB()
+
+        # wait for press
+        while buttonAState == 0 and buttonBState == 0:
+            buttonAState = self.uBit.getButtonA()
+            buttonBState = self.uBit.getButtonB()               
+
+        self.buttonStates = {'a': buttonAState, 'b': buttonBState}
+        return buttonAState, buttonBState
+
     def waitForButtonPress(self):               # waits for any button to be released, then pressed
         buttonAState = self.uBit.getButtonA()
         buttonBState = self.uBit.getButtonB()
@@ -110,6 +145,7 @@ class Microbit:
             buttonBState = self.uBit.getButtonB()
 
         #sleep(0.5)
+        self.buttonStates = {'a': buttonAState, 'b': buttonBState}
         return buttonAState, buttonBState
 
     def getTemperature(self):                   # returns integer of temp reading
