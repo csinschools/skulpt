@@ -221,7 +221,7 @@ var $builtinmodule = function(name)
         const x = (e.clientX - rect.left) * scaleX;
         const y = _convY((e.clientY - rect.top) * scaleY);
 
-        _mousePos = [x, y];
+        _mousePos = [Math.floor(x), Math.floor(y)];
     }
 
     function _touchEndListener(e) {
