@@ -250,6 +250,11 @@ def printImage(url, width = None, height = None, x = None, y = None):
     while csinscTools.isLoadingImage():
         continue 
 
+def printYoutube(id, width = None, height = None, x = None, y = None):
+    csinscTools.addYoutube(id, width, height, x, y)
+    while csinscTools.isLoadingImage():
+        continue     
+
 class Button:
     id = 0
     allButtons = {}
@@ -654,8 +659,6 @@ def getWeather(location):
     return (csinscTools.cloudResponse)
 
 def getWeatherTemp(location):
-    if len(schoolID) == 0:
-        raise Exception("School ID not set. Please set it using the function setSchool().")
     showSpinner()
     try:
         csinscTools.getWeather(location, schoolID)

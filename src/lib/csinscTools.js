@@ -213,7 +213,13 @@ var $builtinmodule = function(name)
       mod.loadingImage = true;
       if (url.v !== null && url.v.length > 0) { 
         addImage(url.v, width.v, height.v, x.v, y.v, () => { mod.loadingImage = false; }, () => { mod.loadingImage = false;});
-      };});   
+    };});   
+
+    mod.addYoutube = new Sk.builtin.func((id, width, height, x , y) => {
+      mod.loadingImage = true;
+      if (id.v !== null && id.v.length > 0) { 
+        addYoutube(id.v, width.v, height.v, x.v, y.v, () => { mod.loadingImage = false; }, () => { mod.loadingImage = false;});
+    };});       
 
     mod.buttonClicked = false;
     mod.buttonsClicked = [];

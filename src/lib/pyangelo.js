@@ -63,16 +63,18 @@ var $builtinmodule = function(name)
     canvas.addEventListener("click", _clickListener, false);
     canvas.addEventListener("mousedown", _mouseDownListener, false);
     canvas.addEventListener("touchstart", _touchStartListener, false);
+    canvas.addEventListener("mousemove", _mouseMoveListener, false);
 
     canvas.addEventListener("mouseup", _mouseUpListener, false);
     canvas.addEventListener("touchend", _touchEndListener, false);    
 
     var _mouseDown = [];
+    var _mousePos = [0, 0];
     
     ctx.font = "30px Consolas";
        
     startTime = new Date();
-        
+
     Sk.builtins.animationFrameRequest = window.requestAnimationFrame(render);
     
     function _convY(y) {
@@ -177,7 +179,6 @@ var $builtinmodule = function(name)
     }    
 
     function _clickListener(e) {
-        console.log("clickelistener:" + e);
         var element = canvas;
         var offsetX = 0, offsetY = 0
     
@@ -191,15 +192,38 @@ var $builtinmodule = function(name)
         x = e.pageX - offsetX;
         y = _convY(e.pageY - offsetY);
 
-        //console.log("clickelistener:" + [x, y]);
-
-        _mouseClicks.push([new Date(), x, y]);
+        _mouseClicks.push([x, y]);
     }
 
     function _touchStartListener(e) {
-        console.log("_touchListener:" + e);
-        _mouseDown.push([-1, -1]);
-    }    
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+
+        // Scale factor: canvas internal size vs displayed CSS size
+        const scaleX = canvas.width  / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const x = (touch.clientX - rect.left) * scaleX;
+        const y = _convY((touch.clientY - rect.top) * scaleY);
+
+        _mouseDown.push([x, y]);
+    }
+
+    function _mouseMoveListener(e) {
+        const rect = canvas.getBoundingClientRect();
+
+        // Scale factor: canvas internal size vs displayed CSS size
+        const scaleX = canvas.width  / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = _convY((e.clientY - rect.top) * scaleY);
+
+        _mousePos = [x, y];
+    }
+
     function _touchEndListener(e) {
         console.log("_touchListener:" + e);
         _mouseDown = [];
@@ -283,6 +307,22 @@ var $builtinmodule = function(name)
 
     mod.isMousePressed = new Sk.builtin.func(() => {   
         return new Sk.builtin.bool(_mouseDown.length > 0);
+    });    
+
+    mod.getMouseDownPosition = new Sk.builtin.func(() => {   
+        if (_mouseDown.length > 0) {
+            let mousePos = new Sk.builtin.tuple( [new Sk.builtin.int_(_mouseDown[0]), new Sk.builtin.int_(_mouseDown[1])]);
+            _mouseDown = []
+            return mousePos
+        }
+        else {
+            return Sk.builtin.none.none$;   
+        } 
+    });
+
+    mod.getMousePosition = new Sk.builtin.func(() => {   
+        let mousePos = new Sk.builtin.tuple( [new Sk.builtin.int_(_mousePos[0]), new Sk.builtin.int_(_mousePos[1])]);
+        return mousePos
     });    
     
     // Add the say function to the module
@@ -395,7 +435,7 @@ var $builtinmodule = function(name)
         {
             args.lineWidth = lineWidth;
         }
-        args.strokeStyle = getColour(color);
+        args.strokeStyle = getColour(color, g, b, a);
         
         args.x = x;
         args.y = y;
